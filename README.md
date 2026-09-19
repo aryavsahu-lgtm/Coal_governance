@@ -130,7 +130,7 @@ python scripts/seed_db.py
 ```bash
 python run.py
 ```
-Open your browser and navigate to: **`http://127.0.0.1:5000`**
+Open your browser and navigate to: **`http://127.0.0.1:5001`**
 
 ---
 
