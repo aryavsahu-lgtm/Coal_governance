@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Regulatory & Operational AI Assistant (RAG) | CoalGov-AI{% endblock %}
+
+{% block extra_head %}
+<!-- Markdown Parser for rich tables and formatted responses -->
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+<style>
+    .chat-bubble-ai table {
+        width: 100%;
+        margin-top: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+        background: #ffffff;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .chat-bubble-ai table th {
+        background: #212529;
+        color: #ffc107;
+        padding: 6px 10px;
+        border: 1px solid #343a40;
+        text-align: left;
+    }
+    .chat-bubble-ai table td {
+        padding: 5px 10px;
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+    .chat-bubble-ai table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    .chat-bubble-ai blockquote {
+        border-left: 3px solid #ffc107;
+        background: #fff8e1;
+        padding: 8px 12px;
+        margin: 8px 0;
+        border-radius: 0 4px 4px 0;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    .chat-bubble-ai hr {
+        margin: 10px 0;
+        border-top: 1px solid #dee2e6;
+    }
+    .chat-bubble-ai h3, .chat-bubble-ai h4, .chat-bubble-ai h5 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-top: 6px;
+        margin-bottom: 6px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-robot text-warning me-2"></i>DGMS Hybrid AI Assistant (RAG)</h4>
+        <p class="text-muted small mb-0">Unified knowledge engine querying <strong>Live Operational Database (Mines & Violations)</strong> + <strong>CMR 2017 & Mines Act 1952</strong></p>
+    </div>
+    <span class="badge bg-dark border"><i class="bi bi-shield-check text-warning"></i> Grounded &bull; Zero Hallucination Mode</span>
+</div>
+
+<div class="row g-4">
+    <!-- Chat Area -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-3 d-flex flex-column" style="height: 650px;">
+            <div class="chat-window flex-grow-1 mb-3 overflow-auto" id="chatWindow" style="max-height: 560px;">
+                <div class="chat-bubble-ai">
+                    <strong>DGMS Hybrid Assistant:</strong><br>
+                    Greetings. I am your compliance and operational safety advisor. I am directly connected to:
+                    <ul class="mb-2 mt-1 ps-3 small">
+                        <li><strong>Live Central Database:</strong> Real-time mine violations, rankings, contractor risk scores, and CAPA status.</li>
+                        <li><strong>Statutory Corpus:</strong> Coal Mines Regulations (CMR) 2017, Mines Act 1952, and DGMS Circulars.</li>
+                    </ul>
+                    You can ask operational questions (e.g. <em>"Which mine has more violations?"</em>) or regulatory questions (e.g. <em>"What does CMR Reg 191 mandate for PPE?"</em>).
+                </div>
+            </div>
+
+            <form onsubmit="handleChatSubmit(event)">
+                <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control" placeholder="Ask a question (e.g., Which mine has more violations? or What does CMR Reg 191 require?)..." required autocomplete="off">
+                    <button type="submit" id="chatSendBtn" class="btn btn-dark">
+                        <i class="bi bi-send"></i> Ask Assistant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right: Suggested Prompts & Corpus Information -->
+    <div class="col-lg-4">
+        <!-- Live Operational Prompts -->
+        <div class="card border-0 shadow-sm p-3 mb-3">
+            <h6 class="fw-bold mb-2 text-primary"><i class="bi bi-activity me-1"></i>Live Operational Queries</h6>
+            <div class="d-grid gap-2">
+                <button class="btn btn-sm btn-outline-primary text-start" onclick="askPrompt('Which mine has more violations?')">
+                    &bull; <strong>Which mine has more violations?</strong>
+                </button>
+                <button class="btn btn-sm btn-outline-primary text-start" onclick="askPrompt('Compare safety violations across all mines')">
+                    &bull; Compare safety violations across all mines
+                </button>
+                <button class="btn btn-sm btn-outline-primary text-start" onclick="askPrompt('Which contractor has the highest risk score?')">
+                    &bull; Highest risk contractors ranking
+                </button>
+                <button class="btn btn-sm btn-outline-primary text-start" onclick="askPrompt('How many corrective actions (CAPA) are pending verification?')">
+                    &bull; Pending CAPA verification status
+                </button>
+            </div>
+        </div>
+
+        <!-- Statutory Regulatory Prompts -->
+        <div class="card border-0 shadow-sm p-3 mb-3">
+            <h6 class="fw-bold mb-2 text-warning"><i class="bi bi-book me-1"></i>Statutory DGMS Queries</h6>
+            <div class="d-grid gap-2">
+                <button class="btn btn-sm btn-outline-secondary text-start" onclick="askPrompt('What are the mandatory PPE requirements under CMR Regulation 191?')">
+                    &bull; Mandatory PPE requirements (CMR Reg 191)
+                </button>
+                <button class="btn btn-sm btn-outline-secondary text-start" onclick="askPrompt('What is the statutory notice of accident under Section 23 of Mines Act 1952?')">
+                    &bull; Statutory notice of accidents (Section 23)
+                </button>
+                <button class="btn btn-sm btn-outline-secondary text-start" onclick="askPrompt('What are the safe operating rules for dumpers and HEMM machinery under Regulation 228?')">
+                    &bull; HEMM machinery safety (CMR Reg 228)
+                </button>
+                <button class="btn btn-sm btn-outline-secondary text-start" onclick="askPrompt('Which mine has more violations and what does CMR 2017 mandate for PPE?')">
+                    &bull; <strong>Hybrid:</strong> Mine rankings + CMR 191 rules
+                </button>
+            </div>
+        </div>
+
+        <!-- Uploaded Contracts & SOPs Prompts -->
+        <div class="card border-0 shadow-sm p-3 mb-3">
+            <h6 class="fw-bold mb-2 text-success"><i class="bi bi-file-earmark-text me-1"></i>Uploaded Contracts & SOPs (OCR)</h6>
+            <div class="d-grid gap-2">
+                <button class="btn btn-sm btn-outline-success text-start" onclick="askPrompt('Check contract details for ABC Earthmovers')">
+                    &bull; <strong>Contract details for ABC Earthmovers</strong>
+                </button>
+                <button class="btn btn-sm btn-outline-success text-start" onclick="askPrompt('What are the penalty clauses in the contractor agreement?')">
+                    &bull; Contractor safety penalty clauses
+                </button>
+                <button class="btn btn-sm btn-outline-success text-start" onclick="askPrompt('What does SOP-04 say about haul road speed limits & berm height?')">
+                    &bull; <strong>SOP-04: Haul road speed & berms</strong>
+                </button>
+                <button class="btn btn-sm btn-outline-success text-start" onclick="askPrompt('What are the emergency evacuation procedures in the mine SOP?')">
+                    &bull; Mine SOP emergency evacuation
+                </button>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-3">
+            <h6 class="fw-bold mb-2"><i class="bi bi-database-check me-1"></i>Active Data Sources</h6>
+            <ul class="list-unstyled small text-muted mb-0">
+                <li class="mb-1"><i class="bi bi-circle-fill text-primary me-1" style="font-size: 0.5rem;"></i> Uploaded Contracts & SOPs (OCR Extracted)</li>
+                <li class="mb-1"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.5rem;"></i> Live MongoDB Violations & Mines Registry</li>
+                <li class="mb-1"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.5rem;"></i> Coal Mines Regulations (CMR) 2017</li>
+                <li class="mb-1"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.5rem;"></i> The Mines Act 1952 (Statutory Sections)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function askPrompt(text) {
+        document.getElementById("chatInput").value = text;
+        document.getElementById("chatSendBtn").click();
+    }
+
+    async function handleChatSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById("chatInput");
+        const query = input.value.trim();
+        if (!query) return;
+
+        const chatWindow = document.getElementById("chatWindow");
+        const sendBtn = document.getElementById("chatSendBtn");
+
+        // Append user bubble
+        chatWindow.innerHTML += `
+            <div class="chat-bubble-user">
+                <strong>You:</strong><br>${query}
+            </div>
+        `;
+        input.value = "";
+        sendBtn.disabled = true;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        // Add thinking placeholder
+        const thinkingId = "thinking_" + Date.now();
+        chatWindow.innerHTML += `
+            <div class="chat-bubble-ai" id="${thinkingId}">
+                <span class="spinner-border spinner-border-sm me-2 text-warning"></span>Querying live database & statutory knowledge corpus...
+            </div>
+        `;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        try {
+            const res = await API.post("/api/chat", { message: query });
+            sendBtn.disabled = false;
+            const thinkEl = document.getElementById(thinkingId);
+
+            if (res && res.success && res.data) {
+                const citationsHtml = (res.data.citations || []).map(c => `
+                    <span class="badge bg-light text-dark border me-1 mt-1">
+                        <i class="bi bi-bookmark-check text-warning"></i> ${c.regulation}
+                    </span>
+                `).join("");
+
+                let renderedBody = "";
+                if (window.marked && typeof marked.parse === "function") {
+                    renderedBody = marked.parse(res.data.response);
+                } else {
+                    renderedBody = res.data.response
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+                }
+
+                thinkEl.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong>DGMS Assistant:</strong>
+                        <span class="badge bg-dark text-warning" style="font-size: 0.7rem;">${res.data.engine || 'Hybrid Engine'}</span>
+                    </div>
+                    <div>${renderedBody}</div>
+                    <div class="mt-2 pt-2 border-top">
+                        <small class="text-secondary d-block"><strong>Citations & Evidence Sources:</strong></small>
+                        ${citationsHtml}
+                    </div>
+                `;
+            } else {
+                thinkEl.innerHTML = `<div class="text-danger">Failed to retrieve answer. Please retry.</div>`;
+            }
+        } catch (err) {
+            sendBtn.disabled = false;
+            document.getElementById(thinkingId).innerHTML = `<div class="text-danger">Error: ${err.message}</div>`;
+        }
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // Auto-fill query if passed via URL parameters (e.g. from Documents Vault)
+    window.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryParam = urlParams.get("query");
+        if (queryParam) {
+            document.getElementById("chatInput").value = queryParam;
+            document.getElementById("chatSendBtn").click();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 50" width="100%" height="100%">
+  <!-- NIC Emblem / Tri-circle connected node -->
+  <g transform="translate(10, 5)">
+    <!-- Connection lines -->
+    <line x1="15" y1="12" x2="30" y2="28" stroke="#005a9c" stroke-width="3"/>
+    <line x1="30" y1="28" x2="15" y2="36" stroke="#008000" stroke-width="3"/>
+    <line x1="15" y1="12" x2="15" y2="36" stroke="#ff8000" stroke-width="3"/>
+    <!-- Orbit Nodes -->
+    <circle cx="15" cy="12" r="6" fill="#ff8000"/>
+    <circle cx="30" cy="28" r="6" fill="#005a9c"/>
+    <circle cx="15" cy="36" r="6" fill="#008000"/>
+    <circle cx="15" cy="12" r="2.5" fill="#ffffff"/>
+    <circle cx="30" cy="28" r="2.5" fill="#ffffff"/>
+    <circle cx="15" cy="36" r="2.5" fill="#ffffff"/>
+  </g>
+  <!-- Text -->
+  <text x="52" y="24" font-family="'Segoe UI', 'Arial', sans-serif" font-weight="900" font-size="18" fill="#005a9c" letter-spacing="0.5">NIC</text>
+  <text x="52" y="36" font-family="'Segoe UI', 'Arial', sans-serif" font-weight="600" font-size="6" fill="#4b5563" letter-spacing="0.2">National Informatics Centre</text>
+</svg>

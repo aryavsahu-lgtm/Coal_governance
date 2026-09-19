@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+
+{% block title %}Violations & Corrective Actions (CAPA) | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Safety Violations & CAPA Governance</h4>
+        <p class="text-muted small mb-0">Detected &bull; Assigned &bull; Acknowledged &bull; CAPA Evidence &bull; Verified &bull; Closed</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-danger btn-sm" onclick="triggerEscalationCheck()">
+            <i class="bi bi-clock-history me-1"></i> Run Escalation Sweep
+        </button>
+        <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#newViolationModal">
+            <i class="bi bi-plus-lg me-1"></i> Log Safety Violation
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm p-3 mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID & Category</th>
+                    <th>Zone & Description</th>
+                    <th>Severity</th>
+                    <th>Source</th>
+                    <th>Deadline & Tier</th>
+                    <th>Status</th>
+                    <th>Workflow Action</th>
+                </tr>
+            </thead>
+            <tbody id="violationsTableBody">
+                <tr><td colspan="7" class="text-center py-4 text-muted">Loading violations...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: New Violation -->
+<div class="modal fade" id="newViolationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Safety Violation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleCreateViolation(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Target Mine</label>
+                        <select id="vMine" class="form-select" required></select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Category</label>
+                            <select id="vCat" class="form-select">
+                                <option value="PPE_VIOLATION">PPE Violation (Helmet/Vest)</option>
+                                <option value="RESTRICTED_AREA">Restricted Perimeter Breach</option>
+                                <option value="SPEED_LIMIT">HEMM Over-speeding</option>
+                                <option value="DUST_SUPPRESSION">Dust Suppression Failure</option>
+                                <option value="ELECTRICAL_SAFETY">Electrical / Flameproof Issue</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Severity</label>
+                            <select id="vSev" class="form-select">
+                                <option value="LOW">LOW</option>
+                                <option value="MEDIUM" selected>MEDIUM</option>
+                                <option value="HIGH">HIGH</option>
+                                <option value="CRITICAL">CRITICAL</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Zone / Location</label>
+                        <input type="text" id="vZone" class="form-control" placeholder="e.g. Pit 1 Extraction Bench" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Violation Description</label>
+                        <textarea id="vDesc" class="form-control" rows="3" required placeholder="Describe non-compliance observed..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Create & Dispatch CAPA</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Submit CAPA Proof -->
+<div class="modal fade" id="submitCapaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Fulfill Corrective Action (CAPA)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleSubmitCapa(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="capaActionId">
+
+                    <!-- Automated AI Verification Option (1-Click) -->
+                    <div class="card bg-success bg-opacity-10 border-success p-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-robot text-success fs-3"></i>
+                                <div>
+                                    <div class="fw-bold text-success small">Automated AI Zone Re-Scan & Verification</div>
+                                    <small class="text-muted d-block" style="font-size: 0.75rem;">Auto-verify using existing violation photos & AI compliance check without manual re-upload</small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-success btn-sm fw-bold text-nowrap" onclick="triggerAutoVerifyCapa()">
+                                <i class="bi bi-lightning-charge-fill me-1"></i> Auto-Verify
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pre-Uploaded Evidence Alert -->
+                    <div class="alert alert-info py-2 px-3 small d-flex align-items-center justify-content-between mb-3" id="prevEvidenceNotice">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-image text-primary fs-5"></i>
+                            <div>
+                                <span class="fw-bold">Pre-Uploaded Statutory Evidence Available</span>
+                                <div class="text-muted" style="font-size: 0.72rem;">Initial violation photos are linked automatically. No need to re-upload unless attaching new proof.</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary">Auto-Linked</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Remediation Notes</label>
+                        <textarea id="capaNotes" class="form-control" rows="2" placeholder="Describe actions taken or verified on site (optional if auto-verifying)...">Hazard mitigated and verified compliant as per statutory regulations.</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-semibold mb-0">Attach New Rectification Photo <span class="text-muted fw-normal">(Optional)</span></label>
+                            <small class="text-muted">Optional override</small>
+                        </div>
+                        <div class="btn-group btn-group-sm w-100 mb-2">
+                            <button type="button" class="btn btn-outline-warning active fw-semibold" id="capaTabCam" onclick="switchCapaMode('cam')"><i class="bi bi-camera-fill me-1"></i> Live Camera</button>
+                            <button type="button" class="btn btn-outline-secondary" id="capaTabFile" onclick="switchCapaMode('file')"><i class="bi bi-folder2-open me-1"></i> File Browse</button>
+                        </div>
+                        <div id="capaCamContainer">
+                            <div class="card bg-dark text-center p-2 mb-2 rounded position-relative" style="min-height: 150px;">
+                                <video id="capaVideo" autoplay playsinline class="w-100 rounded" style="max-height: 180px; object-fit: cover; display: none;"></video>
+                                <div id="capaCamPrompt" class="p-3 text-white">
+                                    <i class="bi bi-camera-video text-warning fs-4 d-block mb-1"></i>
+                                    <small class="text-white-50 d-block mb-2">Take live photo only if you wish to attach fresh proof</small>
+                                    <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="startCapaCamera()">Open Camera</button>
+                                </div>
+                                <div id="capaCamControls" class="position-absolute bottom-0 start-0 end-0 p-2 bg-dark bg-opacity-75 d-none d-flex justify-content-center gap-2">
+                                    <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="snapCapaPhoto()"><i class="bi bi-camera-fill me-1"></i> Capture</button>
+                                    <button type="button" class="btn btn-outline-light btn-sm" onclick="stopCapaCamera()">Close</button>
+                                </div>
+                            </div>
+                            <div id="capaPreviewCard" class="card border-success p-2 d-none">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img id="capaThumb" src="" class="rounded border" style="width: 60px; height: 45px; object-fit: cover;">
+                                        <small class="fw-bold text-success"><i class="bi bi-check-circle me-1"></i>Fresh Snapshot Attached</small>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearCapaSnap()"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="capaFileContainer" class="d-none">
+                            <input type="file" id="capaFile" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="capaSubmitBtn" class="btn btn-dark">
+                        <i class="bi bi-check2-circle me-1"></i> Submit with Linked Evidence
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Verify CAPA -->
+<div class="modal fade" id="verifyCapaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Verify Corrective Action (Authorized Safety Officer)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleVerifyCapa(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="verifyActionId">
+                    <input type="hidden" id="verifyViolationId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Verification Decision</label>
+                        <select id="verifyDecision" class="form-select">
+                            <option value="VERIFIED">VERIFIED - Hazard Fully Mitigated</option>
+                            <option value="REJECTED">REJECTED - Inadequate Remediation</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Verification Remarks</label>
+                        <textarea id="verifyRemarks" class="form-control" rows="3" required placeholder="State statutory assessment of rectification..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Confirm Verification</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadViolations() {
+        const res = await API.get("/api/violations");
+        const capaRes = await API.get("/api/corrective-actions");
+        const capas = (capaRes && capaRes.success) ? capaRes.data : [];
+
+        const tbody = document.getElementById("violationsTableBody");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No violations logged.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = res.data.map(v => {
+            const capa = capas.find(c => c.violation_id === v._id);
+            let actionBtn = "";
+
+            if (v.status === "CREATED" || v.status === "DETECTED") {
+                actionBtn = `<button class="btn btn-xs btn-outline-primary" onclick="acknowledgeViolation('${v._id}')">Acknowledge</button>`;
+            } else if (v.status === "ASSIGNED" || v.status === "ACKNOWLEDGED") {
+                actionBtn = `<button class="btn btn-xs btn-outline-success me-1" onclick="quickAutoVerify('${capa ? capa._id : ''}')" title="Auto-Verify via AI Surveillance"><i class="bi bi-robot"></i> Auto-Verify</button>`;
+                actionBtn += `<button class="btn btn-xs btn-dark" onclick="openCapaModal('${capa ? capa._id : ''}')">Submit CAPA</button>`;
+            } else if (v.status === "CORRECTIVE_ACTION") {
+                actionBtn = `<button class="btn btn-xs btn-outline-success me-1" onclick="quickAutoVerify('${capa ? capa._id : ''}')" title="Auto-Verify via AI Surveillance"><i class="bi bi-robot"></i> Auto-Verify</button>`;
+                actionBtn += `<button class="btn btn-xs btn-warning text-dark" onclick="openCapaModal('${capa ? capa._id : ''}')">Submit CAPA</button>`;
+            } else if (v.status === "VERIFICATION" || (capa && capa.verification_status === "SUBMITTED")) {
+                actionBtn = `<button class="btn btn-xs btn-warning text-dark" onclick="openVerifyModal('${capa ? capa._id : ''}', '${v._id}')">Verify CAPA</button>`;
+            } else if (capa && capa.verification_status === "VERIFIED" && v.status !== "CLOSED") {
+                actionBtn = `<button class="btn btn-xs btn-success fw-bold" onclick="closeViolation('${v._id}')"><i class="bi bi-check2-circle me-1"></i>Close Violation</button>`;
+            } else if (v.status === "CLOSED") {
+                actionBtn = `<span class="badge bg-success"><i class="bi bi-check-circle"></i> Closed</span>`;
+            } else {
+                actionBtn = `<button class="btn btn-xs btn-outline-secondary" onclick="openCapaModal('${capa ? capa._id : ''}')">Remediate</button>`;
+            }
+
+            return `
+                <tr>
+                    <td>
+                        <div class="fw-bold">${v.category}</div>
+                        <small class="text-muted"><code>#${v._id.substring(0, 8)}</code></small>
+                    </td>
+                    <td>
+                        <div>${v.zone}</div>
+                        <span class="text-truncate d-inline-block text-muted" style="max-width: 260px;">${v.description}</span>
+                    </td>
+                    <td><span class="badge badge-${v.severity.toLowerCase()}">${v.severity}</span></td>
+                    <td><span class="badge bg-light text-dark border">${v.source}</span></td>
+                    <td>
+                        <div>${v.deadline ? v.deadline.substring(0, 16).replace('T', ' ') : 'N/A'}</div>
+                        <small class="text-danger">Tier ${capa ? capa.escalation_tier : 0} Escalation</small>
+                    </td>
+                    <td><span class="badge bg-secondary">${v.status}</span></td>
+                    <td>${actionBtn}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    async function acknowledgeViolation(vId) {
+        const res = await API.post(`/api/violations/${vId}/acknowledge`);
+        if (res && res.success) {
+            API.showToast("Violation acknowledged", "info");
+            loadViolations();
+        }
+    }
+
+    function openCapaModal(actionId) {
+        if (!actionId) {
+            API.showToast("No active CAPA record found for this violation", "warning");
+            return;
+        }
+        document.getElementById("capaActionId").value = actionId;
+        clearCapaSnap();
+        stopCapaCamera();
+        new bootstrap.Modal(document.getElementById("submitCapaModal")).show();
+    }
+
+    let capaActiveMode = "cam";
+    let capaSnapFile = null;
+
+    function switchCapaMode(mode) {
+        capaActiveMode = mode;
+        const tabCam = document.getElementById("capaTabCam");
+        const tabFile = document.getElementById("capaTabFile");
+        const camCont = document.getElementById("capaCamContainer");
+        const fileCont = document.getElementById("capaFileContainer");
+
+        if (mode === "cam") {
+            tabCam.className = "btn btn-warning active fw-semibold";
+            tabFile.className = "btn btn-outline-secondary";
+            camCont.classList.remove("d-none");
+            fileCont.classList.add("d-none");
+        } else {
+            tabFile.className = "btn btn-secondary active fw-semibold";
+            tabCam.className = "btn btn-outline-secondary";
+            fileCont.classList.remove("d-none");
+            camCont.classList.add("d-none");
+            stopCapaCamera();
+        }
+    }
+
+    async function startCapaCamera() {
+        try {
+            const videoEl = document.getElementById("capaVideo");
+            document.getElementById("capaCamPrompt").classList.add("d-none");
+            videoEl.style.display = "block";
+            await CameraHelper.startStream(videoEl);
+            document.getElementById("capaCamControls").classList.remove("d-none");
+        } catch (err) {
+            API.showToast(err.message, "danger");
+            stopCapaCamera();
+        }
+    }
+
+    function stopCapaCamera() {
+        const videoEl = document.getElementById("capaVideo");
+        CameraHelper.stopStream(videoEl);
+        videoEl.style.display = "none";
+        document.getElementById("capaCamControls").classList.add("d-none");
+        if (!capaSnapFile) {
+            document.getElementById("capaCamPrompt").classList.remove("d-none");
+        }
+    }
+
+    async function snapCapaPhoto() {
+        try {
+            const videoEl = document.getElementById("capaVideo");
+            const { file, dataUrl } = await CameraHelper.captureSnapshot(videoEl, "capa_rectification");
+            capaSnapFile = file;
+
+            stopCapaCamera();
+            document.getElementById("capaCamPrompt").classList.add("d-none");
+            document.getElementById("capaThumb").src = dataUrl;
+            document.getElementById("capaPreviewCard").classList.remove("d-none");
+            API.showToast("CAPA proof snapshot captured!", "success");
+        } catch (err) {
+            API.showToast(err.message, "danger");
+        }
+    }
+
+    function clearCapaSnap() {
+        capaSnapFile = null;
+        const card = document.getElementById("capaPreviewCard");
+        if (card) card.classList.add("d-none");
+        const prompt = document.getElementById("capaCamPrompt");
+        if (prompt) prompt.classList.remove("d-none");
+    }
+
+    async function quickAutoVerify(capaId) {
+        if (!capaId) {
+            API.showToast("No active CAPA record found for this violation", "warning");
+            return;
+        }
+        const res = await API.post(`/api/corrective-actions/${capaId}/auto-verify`);
+        if (res && res.success) {
+            API.showToast("CAPA automatically verified via AI surveillance clearance! Ready for closure.", "success");
+            loadViolations();
+        }
+    }
+
+    async function triggerAutoVerifyCapa() {
+        const actionId = document.getElementById("capaActionId").value;
+        if (!actionId) return;
+        const res = await API.post(`/api/corrective-actions/${actionId}/auto-verify`);
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("submitCapaModal")).hide();
+            API.showToast("CAPA automatically verified via AI surveillance! Ready for closure.", "success");
+            loadViolations();
+        }
+    }
+
+    async function handleSubmitCapa(e) {
+        e.preventDefault();
+        const actionId = document.getElementById("capaActionId").value;
+        const notes = document.getElementById("capaNotes").value;
+        const fileInput = document.getElementById("capaFile");
+        const evidenceUrls = [];
+
+        const activeFile = (capaActiveMode === "cam" && capaSnapFile) ? capaSnapFile : (fileInput.files.length > 0 ? fileInput.files[0] : null);
+
+        const submitBtn = document.getElementById("capaSubmitBtn");
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';
+        }
+
+        try {
+            if (activeFile) {
+                const formData = new FormData();
+                formData.append("file", activeFile);
+                formData.append("mine_id", "MINE_EVIDENCE");
+                formData.append("document_type", "CAPA_PROOF");
+                const upRes = await API.post("/api/documents/upload", formData);
+                if (upRes && upRes.success) evidenceUrls.push(upRes.data.file_url);
+            }
+
+            const res = await API.post(`/api/corrective-actions/${actionId}/submit-evidence`, {
+                notes,
+                evidence: evidenceUrls
+            });
+            if (res && res.success) {
+                bootstrap.Modal.getInstance(document.getElementById("submitCapaModal")).hide();
+                API.showToast("CAPA remediation submitted with linked evidence!", "success");
+                loadViolations();
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Submit with Linked Evidence';
+            }
+        }
+    }
+
+    function openVerifyModal(actionId, violationId) {
+        document.getElementById("verifyActionId").value = actionId;
+        document.getElementById("verifyViolationId").value = violationId;
+        new bootstrap.Modal(document.getElementById("verifyCapaModal")).show();
+    }
+
+    async function handleVerifyCapa(e) {
+        e.preventDefault();
+        const actionId = document.getElementById("verifyActionId").value;
+        const violationId = document.getElementById("verifyViolationId").value;
+        const decision = document.getElementById("verifyDecision").value;
+        const remarks = document.getElementById("verifyRemarks").value;
+
+        const res = await API.post(`/api/corrective-actions/${actionId}/verify`, { status: decision, remarks });
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("verifyCapaModal")).hide();
+            API.showToast(`CAPA proof ${decision}! You can now close the violation.`, "success");
+            loadViolations();
+        }
+    }
+
+    async function closeViolation(vId) {
+        const res = await API.post(`/api/violations/${vId}/close`, {
+            closure_notes: "Statutory verified closure by authorized safety officer"
+        });
+        if (res && res.success) {
+            API.showToast("Violation successfully closed!", "success");
+            loadViolations();
+        }
+    }
+
+    async function triggerEscalationCheck() {
+        const res = await API.post("/api/rules/escalate-check");
+        if (res && res.success) {
+            API.showToast(`Escalation sweep done: ${res.data.escalated} items escalated to higher tiers.`, "warning");
+            loadViolations();
+        }
+    }
+
+    async function handleCreateViolation(e) {
+        e.preventDefault();
+        const payload = {
+            mine_id: document.getElementById("vMine").value,
+            category: document.getElementById("vCat").value,
+            severity: document.getElementById("vSev").value,
+            zone: document.getElementById("vZone").value,
+            description: document.getElementById("vDesc").value
+        };
+        const res = await API.post("/api/violations", payload);
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("newViolationModal")).hide();
+            API.showToast("Violation logged & CAPA dispatched", "success");
+            loadViolations();
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("vMine");
+            sel.innerHTML = mRes.data.map(m => `<option value="${m._id}">${m.mine_name}</option>`).join("");
+        }
+        loadViolations();
+    });
+</script>
+{% endblock %}

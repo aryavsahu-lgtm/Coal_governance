@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Statutory Compliance Management | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Statutory Compliance Board</h4>
+        <p class="text-muted small mb-0">Track compliance against Coal Mines Regulations 2017, Mines Act 1952 & MoEFCC circulars</p>
+    </div>
+    <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#newComplianceModal">
+        <i class="bi bi-plus-lg me-1"></i> Add Statutory Requirement
+    </button>
+</div>
+
+<!-- Filters Row -->
+<div class="card border-0 shadow-sm p-3 mb-4">
+    <div class="row g-2 align-items-center">
+        <div class="col-md-3">
+            <select id="filterCategory" class="form-select form-select-sm" onchange="loadCompliance()">
+                <option value="">All Categories</option>
+                <option value="Safety">Safety</option>
+                <option value="Environment">Environment</option>
+                <option value="Labour">Labour</option>
+                <option value="Equipment">Equipment</option>
+                <option value="Contractor">Contractor</option>
+                <option value="Documentation">Documentation</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="filterStatus" class="form-select form-select-sm" onchange="loadCompliance()">
+                <option value="">All Statuses</option>
+                <option value="COMPLIANT">Compliant</option>
+                <option value="DUE_SOON">Due Soon</option>
+                <option value="OVERDUE">Overdue</option>
+                <option value="NON_COMPLIANT">Non-Compliant</option>
+                <option value="PENDING">Pending</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select id="filterMine" class="form-select form-select-sm" onchange="loadCompliance()">
+                <option value="">All Mines</option>
+            </select>
+        </div>
+        <div class="col-md-2 text-end">
+            <a href="/api/reports/download?type=compliance&format=pdf" class="btn btn-outline-danger btn-sm w-100">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Table Container -->
+<div class="card border-0 shadow-sm p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Title & Reference</th>
+                    <th>Category</th>
+                    <th>Frequency</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="complianceTableBody">
+                <tr><td colspan="6" class="text-center py-4 text-muted">Loading compliance items...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Update Status -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Compliance Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleUpdateStatus(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="updateReqId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">New Status</label>
+                        <select id="updateStatusVal" class="form-select" required>
+                            <option value="COMPLIANT">COMPLIANT</option>
+                            <option value="UNDER_REVIEW">UNDER_REVIEW</option>
+                            <option value="PENDING">PENDING</option>
+                            <option value="NON_COMPLIANT">NON_COMPLIANT</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Officer Remarks & Evidence Notes</label>
+                        <textarea id="updateRemarks" class="form-control" rows="3" placeholder="Provide details of survey, inspection, or certificate verified..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: New Requirement -->
+<div class="modal fade" id="newComplianceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Statutory Requirement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleCreateCompliance(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Title</label>
+                        <input type="text" id="reqTitle" class="form-control" required placeholder="e.g. Monthly Dust Survey at Transfer Benches">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Category</label>
+                            <select id="reqCat" class="form-select">
+                                <option value="Safety">Safety</option>
+                                <option value="Environment">Environment</option>
+                                <option value="Labour">Labour</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Documentation">Documentation</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Applicable Mine</label>
+                            <select id="reqMine" class="form-select" required></select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Frequency</label>
+                            <select id="reqFreq" class="form-select">
+                                <option value="DAILY">DAILY</option>
+                                <option value="WEEKLY">WEEKLY</option>
+                                <option value="MONTHLY">MONTHLY</option>
+                                <option value="QUARTERLY">QUARTERLY</option>
+                                <option value="ANNUALLY">ANNUALLY</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Due Date</label>
+                            <input type="date" id="reqDueDate" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Statutory Reference</label>
+                        <input type="text" id="reqRef" class="form-control" placeholder="e.g. CMR 2017 Reg. 104">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Save Requirement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadCompliance() {
+        const cat = document.getElementById("filterCategory").value;
+        const status = document.getElementById("filterStatus").value;
+        const mine = document.getElementById("filterMine").value;
+
+        const res = await API.get("/api/compliance", { category: cat, status: status, mine_id: mine });
+        const tbody = document.getElementById("complianceTableBody");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No compliance requirements match the criteria.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = res.data.map(c => `
+            <tr>
+                <td>
+                    <div class="fw-bold">${c.title}</div>
+                    <small class="text-muted">${c.statutory_reference || 'Statutory Code'}</small>
+                </td>
+                <td><span class="badge bg-light text-dark border">${c.category}</span></td>
+                <td>${c.frequency}</td>
+                <td>${c.due_date ? c.due_date.substring(0, 10) : 'N/A'}</td>
+                <td>
+                    <span class="badge ${c.status === 'COMPLIANT' ? 'badge-compliant' : (c.status === 'OVERDUE' ? 'badge-overdue' : 'badge-high')}">
+                        ${c.status}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-dark" onclick="openUpdateModal('${c._id}')">
+                        Update Status
+                    </button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function openUpdateModal(reqId) {
+        document.getElementById("updateReqId").value = reqId;
+        new bootstrap.Modal(document.getElementById("updateStatusModal")).show();
+    }
+
+    async function handleUpdateStatus(e) {
+        e.preventDefault();
+        const reqId = document.getElementById("updateReqId").value;
+        const status = document.getElementById("updateStatusVal").value;
+        const remarks = document.getElementById("updateRemarks").value;
+
+        const res = await API.put(`/api/compliance/${reqId}/status`, { status, remarks });
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("updateStatusModal")).hide();
+            API.showToast("Compliance status updated", "success");
+            loadCompliance();
+        }
+    }
+
+    async function handleCreateCompliance(e) {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById("reqTitle").value,
+            category: document.getElementById("reqCat").value,
+            applicable_mine: document.getElementById("reqMine").value,
+            frequency: document.getElementById("reqFreq").value,
+            due_date: document.getElementById("reqDueDate").value,
+            statutory_reference: document.getElementById("reqRef").value
+        };
+
+        const res = await API.post("/api/compliance", payload);
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("newComplianceModal")).hide();
+            API.showToast("Requirement registered successfully", "success");
+            loadCompliance();
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        // Load Mines dropdown
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const filterMine = document.getElementById("filterMine");
+            const reqMine = document.getElementById("reqMine");
+            mRes.data.forEach(m => {
+                const opt1 = document.createElement("option");
+                opt1.value = m._id;
+                opt1.textContent = m.mine_name;
+                filterMine.appendChild(opt1);
+
+                const opt2 = document.createElement("option");
+                opt2.value = m._id;
+                opt2.textContent = m.mine_name;
+                reqMine.appendChild(opt2);
+            });
+        }
+        loadCompliance();
+    });
+</script>
+{% endblock %}

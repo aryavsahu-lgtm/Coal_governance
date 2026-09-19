@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="100%" height="100%">
+  <!-- Lion Capital of Ashoka - State Emblem of India Silhouette -->
+  <g fill="#1f2937" stroke="none">
+    <!-- Central Lion Head -->
+    <path d="M50 12 C44 12 40 16 38 22 C36 28 37 34 39 38 C37 40 35 43 35 47 C35 52 38 56 42 58 C41 62 42 66 45 69 L43 78 L57 78 L55 69 C58 66 59 62 58 58 C62 56 65 52 65 47 C65 43 63 40 61 38 C63 34 64 28 62 22 C60 16 56 12 50 12 Z"/>
+    <!-- Left Lion Head -->
+    <path d="M36 24 C30 23 24 27 22 34 C20 40 22 47 25 52 C23 55 22 59 24 64 C26 68 30 71 35 72 L37 78 L43 78 L41 70 C38 67 36 63 36 58 C34 56 32 52 32 47 C32 42 34 37 36 33 Z"/>
+    <!-- Right Lion Head -->
+    <path d="M64 24 C70 23 76 27 78 34 C80 40 78 47 75 52 C77 55 78 59 76 64 C74 68 70 71 65 72 L63 78 L57 78 L59 70 C62 67 64 63 64 58 C66 56 68 52 68 47 C68 42 66 37 64 33 Z"/>
+    <!-- Abacus Base -->
+    <rect x="18" y="78" width="64" height="6" rx="2" fill="#1f2937"/>
+    <!-- Ashoka Chakra in Center -->
+    <circle cx="50" cy="92" r="7.5" fill="none" stroke="#1f2937" stroke-width="1.8"/>
+    <circle cx="50" cy="92" r="2" fill="#1f2937"/>
+    <!-- Chakra Spokes -->
+    <line x1="50" y1="84.5" x2="50" y2="99.5" stroke="#1f2937" stroke-width="1"/>
+    <line x1="42.5" y1="92" x2="57.5" y2="92" stroke="#1f2937" stroke-width="1"/>
+    <line x1="44.7" y1="86.7" x2="55.3" y2="97.3" stroke="#1f2937" stroke-width="1"/>
+    <line x1="44.7" y1="97.3" x2="55.3" y2="86.7" stroke="#1f2937" stroke-width="1"/>
+    <!-- Galloping Horse (Left) & Bull (Right) representations -->
+    <path d="M28 92 C28 89 31 88 34 89 C36 89 37 91 38 94 C36 95 33 95 31 94 C30 96 28 95 28 92 Z" fill="#1f2937"/>
+    <path d="M72 92 C72 89 69 88 66 89 C64 89 63 91 62 94 C64 95 67 95 69 94 C70 96 72 95 72 92 Z" fill="#1f2937"/>
+    <!-- Lower Base -->
+    <rect x="15" y="100" width="70" height="5" rx="1.5" fill="#1f2937"/>
+    <!-- Satyameva Jayate (Stylized Script Line) -->
+    <text x="50" y="117" font-family="'Noto Sans Devanagari', 'Mangal', 'Segoe UI', serif" font-size="7.5" font-weight="bold" text-anchor="middle" fill="#1f2937" letter-spacing="1">सत्यमेव जयते</text>
+  </g>
+</svg>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CoalGov-AI | Smart Governance Platform{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Leaflet GIS CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Custom Platform Theme -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar Navigation -->
+            <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-flex flex-column justify-content-between">
+                <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-3">
+                    <a href="/" class="d-flex align-items-center pb-2 mb-md-1 me-md-auto text-decoration-none">
+                        <img src="/static/img/mineguard_shield.svg" alt="MineGuard" style="height: 34px; width: 34px;" class="me-2">
+                        <span class="brand-title" style="font-size: 1.05rem;">MineGuard Command</span>
+                    </a>
+                    <div class="text-xs text-secondary mb-3 d-none d-sm-inline" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                        MINISTRY OF COAL &bull; DGMS GOV
+                    </div>
+
+                    <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100" id="menu">
+                        <li class="nav-item w-100" id="navItemDashboard">
+                            <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">
+                                <i class="bi bi-speedometer2"></i> <span class="d-none d-sm-inline">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,REGULATORY_AUTHORITY">
+                            <a href="/mines-management" class="nav-link {% if request.path == '/mines-management' %}active{% endif %}">
+                                <i class="bi bi-building"></i> <span class="d-none d-sm-inline">Mines & Zones</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,INSPECTION_OFFICER,ENVIRONMENTAL_OFFICER,REGULATORY_AUTHORITY">
+                            <a href="/compliance-board" class="nav-link {% if request.path == '/compliance-board' %}active{% endif %}">
+                                <i class="bi bi-clipboard2-check"></i> <span class="d-none d-sm-inline">Compliance</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,INSPECTION_OFFICER,REGULATORY_AUTHORITY">
+                            <a href="/inspections-board" class="nav-link {% if request.path == '/inspections-board' %}active{% endif %}">
+                                <i class="bi bi-search"></i> <span class="d-none d-sm-inline">Inspections</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,MINE_OFFICER,SAFETY_OFFICER,INSPECTION_OFFICER,ENVIRONMENTAL_OFFICER">
+                            <a href="/field-reporting" class="nav-link {% if request.path == '/field-reporting' %}active{% endif %}">
+                                <i class="bi bi-phone"></i> <span class="d-none d-sm-inline">Field Reporting</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,INSPECTION_OFFICER,ENVIRONMENTAL_OFFICER,CONTRACTOR,REGULATORY_AUTHORITY,WORKER,PUBLIC">
+                            <a href="/violations-board" class="nav-link {% if request.path == '/violations-board' %}active{% endif %}">
+                                <i class="bi bi-exclamation-octagon"></i> <span class="d-none d-sm-inline">Violations &amp; CAPA</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,REGULATORY_AUTHORITY">
+                            <a href="/incidents-board" class="nav-link {% if request.path == '/incidents-board' %}active{% endif %}">
+                                <i class="bi bi-radioactive"></i> <span class="d-none d-sm-inline">Incidents &amp; RCA</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER">
+                            <a href="/contractors-board" class="nav-link {% if request.path == '/contractors-board' %}active{% endif %}">
+                                <i class="bi bi-people"></i> <span class="d-none d-sm-inline">Contractors</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,INSPECTION_OFFICER,ENVIRONMENTAL_OFFICER,CONTRACTOR,REGULATORY_AUTHORITY,WORKER,PUBLIC">
+                            <a href="/documents-vault" class="nav-link {% if request.path == '/documents-vault' %}active{% endif %}">
+                                <i class="bi bi-file-earmark-text"></i> <span class="d-none d-sm-inline">Safety SOPs &amp; Documents</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,MINE_OFFICER,SAFETY_OFFICER,INSPECTION_OFFICER">
+                            <a href="/ai-vision-studio" class="nav-link {% if request.path == '/ai-vision-studio' %}active{% endif %}">
+                                <i class="bi bi-camera-video"></i> <span class="d-none d-sm-inline">AI Vision PPE</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,INSPECTION_OFFICER,ENVIRONMENTAL_OFFICER,CONTRACTOR,REGULATORY_AUTHORITY,WORKER,PUBLIC">
+                            <a href="/gis-map" class="nav-link {% if request.path == '/gis-map' %}active{% endif %}">
+                                <i class="bi bi-map"></i> <span class="d-none d-sm-inline">GIS Mine Map</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,MINE_OFFICER,SAFETY_OFFICER,REGULATORY_AUTHORITY">
+                            <a href="/analytics-board" class="nav-link {% if request.path == '/analytics-board' %}active{% endif %}">
+                                <i class="bi bi-graph-up-arrow"></i> <span class="d-none d-sm-inline">Analytics & Risk</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100">
+                            <a href="/regulatory-assistant" class="nav-link {% if request.path == '/regulatory-assistant' %}active{% endif %}">
+                                <i class="bi bi-robot"></i> <span class="d-none d-sm-inline">AI RAG Assistant</span>
+                            </a>
+                        </li>
+                        <li class="nav-item w-100" data-allowed-roles="SUPER_ADMIN,CORPORATE_MANAGEMENT,REGULATORY_AUTHORITY">
+                            <a href="/audit-explorer" class="nav-link {% if request.path == '/audit-explorer' %}active{% endif %}">
+                                <i class="bi bi-journal-text"></i> <span class="d-none d-sm-inline">Audit Trail</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- User Quick Info -->
+                <div class="px-3 py-3 border-top border-secondary w-100">
+                    <div class="d-flex align-items-center justify-content-between text-white">
+                        <div class="overflow-hidden">
+                            <div class="fw-bold text-truncate" id="navUserName" style="max-width: 130px; font-size: 0.85rem;">User</div>
+                            <small class="text-warning text-truncate d-block" id="navUserRole" style="font-size: 0.72rem;">Role</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger border-0" onclick="API.logout()" title="Logout">
+                            <i class="bi bi-box-arrow-right fs-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col py-0 d-flex flex-column min-vh-100">
+                <!-- Top Navbar -->
+                <nav class="top-navbar d-flex justify-content-between align-items-center">
+                    <!-- Left: Official Emblem & Ministry Branding -->
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="/static/img/emblem_india.svg" alt="Emblem" style="height: 38px; width: auto;">
+                        <div class="border-start ps-2 d-none d-md-block">
+                            <div class="fw-bold text-dark" style="font-size: 0.78rem; line-height: 1.1;">Government of India &bull; Ministry of Coal</div>
+                            <div class="text-secondary" style="font-size: 0.7rem;">MineGuard Compliance Command</div>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="d-flex align-items-center w-40 ms-auto me-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="globalSearchInput" class="form-control bg-light border-start-0" placeholder="Search Mines, Violations, Regulations...">
+                            <button class="btn btn-outline-secondary" type="button" onclick="performGlobalSearch()">Search</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Controls -->
+                    <div class="d-flex align-items-center gap-3">
+                        <span id="offlineQueueBadge" class="badge bg-warning text-dark" style="display:none;" onclick="OfflineSync.syncAll()" title="Click to sync now">
+                            <i class="bi bi-cloud-arrow-up"></i> 0 Pending Sync
+                        </span>
+
+                        <!-- Notification Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light position-relative border" type="button" id="notifDropdown" data-bs-toggle="dropdown" onclick="loadNotifications()">
+                                <i class="bi bi-bell"></i>
+                                <span id="notifCountBadge" class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="display:none;"></span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow p-2" aria-labelledby="notifDropdown" style="width: 340px; max-height: 400px; overflow-y: auto;" id="notifListContainer">
+                                <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                    <span>Notifications</span>
+                                    <button class="btn btn-xs btn-link p-0 text-decoration-none" onclick="markAllNotificationsRead()">Mark All Read</button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <div id="notifItems">
+                                    <li class="text-center py-2 text-muted small">No notifications</li>
+                                </div>
+                            </ul>
+                        </div>
+
+                        <!-- Quick Report Export Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-download me-1"></i> Reports
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><h6 class="dropdown-header">Export Governance Data</h6></li>
+                                <li><a class="dropdown-item" href="/api/reports/download?type=compliance&format=pdf"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Compliance Report (PDF)</a></li>
+                                <li><a class="dropdown-item" href="/api/reports/download?type=violation&format=pdf"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Violations Log (PDF)</a></li>
+                                <li><a class="dropdown-item" href="/api/reports/download?type=monthly&format=pdf"><i class="bi bi-file-earmark-pdf text-danger me-2"></i>Monthly Governance (PDF)</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/api/reports/download?type=violation&format=csv"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Violations (CSV)</a></li>
+                                <li><a class="dropdown-item" href="/api/reports/download?type=compliance&format=csv"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Compliance (CSV)</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Page Body Content -->
+                <div class="container-fluid p-4 flex-grow-1">
+                    {% block content %}{% endblock %}
+                </div>
+
+                <!-- Official Ministry of Coal Blue Footer -->
+                <footer class="gov-footer mt-auto">
+                    <div class="container-fluid px-4">
+                        <div class="row g-4">
+                            <!-- Col 1: Ministry Identity -->
+                            <div class="col-lg-4 col-md-6">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="p-1 bg-white rounded-1" style="display: inline-block;">
+                                        <img src="/static/img/emblem_india.svg" alt="Emblem" style="height: 38px; width: auto;">
+                                    </div>
+                                    <img src="/static/img/mining_seal.svg" alt="DGMS Seal" style="height: 42px; width: 42px;">
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-white" style="font-size: 0.95rem;">MINISTRY OF COAL</h6>
+                                        <div class="small text-light opacity-75" style="font-size: 0.75rem;">Government of India</div>
+                                    </div>
+                                </div>
+                                <p class="small text-light opacity-75 mb-2" style="font-size: 0.82rem; line-height: 1.5;">
+                                    Directorate General of Mines Safety (DGMS) &amp; Coal India Limited.<br>
+                                    <strong>MineGuard Compliance Command</strong> statutory governance platform.
+                                </p>
+                            </div>
+
+                            <!-- Col 2: Quick Links -->
+                            <div class="col-lg-2 col-md-6 col-6">
+                                <h6 style="font-size: 0.88rem;">QUICK LINKS</h6>
+                                <ul style="font-size: 0.82rem;">
+                                    <li><a href="/dashboard">&gt; Dashboard</a></li>
+                                    <li><a href="/compliance-board">&gt; Statutory Register</a></li>
+                                    <li><a href="/inspections-board">&gt; Returns &amp; Audits</a></li>
+                                    <li><a href="/gis-map">&gt; Interactive GIS Map</a></li>
+                                    <li><a href="/audit-explorer">&gt; SHA-256 Ledger</a></li>
+                                </ul>
+                            </div>
+
+                            <!-- Col 3: Contact Directorate -->
+                            <div class="col-lg-3 col-md-6 col-6">
+                                <h6 style="font-size: 0.88rem;">CONTACT DIRECTORATE</h6>
+                                <div class="small text-light opacity-90" style="font-size: 0.8rem;">
+                                    <div class="mb-1"><i class="bi bi-geo-alt-fill text-warning me-1"></i>Shastri Bhawan, New Delhi - 110001</div>
+                                    <div class="mb-1"><i class="bi bi-building text-warning me-1"></i>DGMS HQ: Sardar Patel Nagar, Dhanbad</div>
+                                    <div><i class="bi bi-telephone-fill text-warning me-1"></i>Helpline (Toll Free): <strong>1800-11-2017</strong></div>
+                                </div>
+                            </div>
+
+                            <!-- Col 4: Strategic Partners -->
+                            <div class="col-lg-3 col-md-6">
+                                <h6 style="font-size: 0.88rem;">PARTNER INITIATIVES</h6>
+                                <div class="gov-partner-badge-container py-1 px-2">
+                                    <img src="/static/img/emblem_india.svg" alt="Emblem of India" style="max-height: 32px;">
+                                    <img src="/static/img/digital_india.svg" alt="Digital India" style="max-height: 28px;">
+                                    <img src="/static/img/nic_logo.svg" alt="NIC" style="max-height: 26px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+                <!-- Footer Bottom Strip -->
+                <div class="gov-footer-bottom py-2">
+                    <div class="container-fluid px-4 d-flex flex-wrap justify-content-between align-items-center" style="font-size: 0.75rem;">
+                        <span>&copy; 2026 Ministry of Coal, Government of India. All Rights Reserved.</span>
+                        <span class="opacity-75">Content Managed by DGMS &amp; CIL &bull; Hosted by NIC</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Search Modal -->
+    <div class="modal fade" id="globalSearchModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-search me-2"></i>Search Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="globalSearchResults">
+                    <p class="text-muted">Searching across mines, violations, incidents, and contractors...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/camera.js"></script>
+    <script src="/static/js/offline_sync.js"></script>
+    <script>
+        async function loadNotifications() {
+            const res = await API.get("/api/notifications?limit=10");
+            const container = document.getElementById("notifItems");
+            if (!res || !res.success || !res.data || res.data.length === 0) {
+                container.innerHTML = '<li class="text-center py-2 text-muted small">No notifications</li>';
+                return;
+            }
+            container.innerHTML = res.data.map(n => `
+                <li class="p-2 border-bottom ${n.is_read ? 'bg-white' : 'bg-light'}">
+                    <div class="d-flex justify-content-between">
+                        <strong class="small text-truncate" style="max-width: 220px;">${n.title}</strong>
+                        <span class="badge ${n.severity === 'CRITICAL' ? 'bg-danger' : (n.severity === 'HIGH' ? 'bg-warning text-dark' : 'bg-info')}">${n.severity}</span>
+                    </div>
+                    <p class="small text-muted mb-0">${n.message}</p>
+                </li>
+            `).join("");
+        }
+
+        async function markAllNotificationsRead() {
+            await API.put("/api/notifications/read-all");
+            document.getElementById("notifCountBadge").style.display = "none";
+            loadNotifications();
+        }
+
+        async function performGlobalSearch() {
+            const term = document.getElementById("globalSearchInput").value.trim();
+            if (!term) return;
+
+            const modal = new bootstrap.Modal(document.getElementById("globalSearchModal"));
+            modal.show();
+
+            const res = await API.get("/api/analytics/search", { q: term });
+            const container = document.getElementById("globalSearchResults");
+            if (!res || !res.success || !res.data) {
+                container.innerHTML = "<p class='text-danger'>Search failed.</p>";
+                return;
+            }
+
+            const d = res.data;
+            let html = "";
+
+            if (d.mines.length) {
+                html += "<h6>Mines</h6><ul class='list-group mb-3'>" + d.mines.map(m => `<li class='list-group-item d-flex justify-content-between'><span><strong>${m.mine_name}</strong> (${m.mine_code}) - ${m.location}</span><span class='badge bg-secondary'>${m.operational_status}</span></li>`).join("") + "</ul>";
+            }
+            if (d.violations.length) {
+                html += "<h6>Violations</h6><ul class='list-group mb-3'>" + d.violations.map(v => `<li class='list-group-item d-flex justify-content-between'><span><strong>${v.category}</strong>: ${v.description}</span><span class='badge bg-danger'>${v.severity}</span></li>`).join("") + "</ul>";
+            }
+            if (d.contractors.length) {
+                html += "<h6>Contractors</h6><ul class='list-group mb-3'>" + d.contractors.map(c => `<li class='list-group-item d-flex justify-content-between'><span><strong>${c.company_name}</strong> (${c.registration_number})</span><span class='badge bg-warning text-dark'>Risk: ${c.risk_score}</span></li>`).join("") + "</ul>";
+            }
+
+            if (!html) {
+                html = "<p class='text-muted'>No matching records found for query: <em>" + term + "</em></p>";
+            }
+            container.innerHTML = html;
+        }
+
+        // Check unread count on startup
+        window.addEventListener("DOMContentLoaded", async () => {
+            if (API.getToken()) {
+                const res = await API.get("/api/notifications?unread=true");
+                if (res && res.success && res.data && res.data.length > 0) {
+                    const badge = document.getElementById("notifCountBadge");
+                    if (badge) badge.style.display = "block";
+                }
+            }
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

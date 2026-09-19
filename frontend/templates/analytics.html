@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics & Anomaly Detection | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Risk Analytics & Operational Anomaly Detection</h4>
+        <p class="text-muted small mb-0">Explainable predictive safety indicators & Isolation Forest statistical pattern deviations</p>
+    </div>
+    <div class="d-flex gap-2">
+        <select id="analyticsMineSelect" class="form-select form-select-sm" style="width: 240px;" onchange="loadAnalyticsDeepDive()">
+            <option value="">Corporate Overview</option>
+        </select>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadAnalyticsDeepDive()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh Analytics
+        </button>
+    </div>
+</div>
+
+<!-- Trend Line Chart -->
+<div class="card border-0 shadow-sm p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h6 class="fw-bold mb-0">14-Day Production Output vs Worker Attendance</h6>
+            <small class="text-muted">Correlated operational time-series data</small>
+        </div>
+        <span class="badge bg-light text-dark border">Scikit-Learn Isolation Forest</span>
+    </div>
+    <div style="height: 320px; position: relative;">
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
+
+<!-- Anomaly Detection Table -->
+<div class="card border-0 shadow-sm p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h6 class="fw-bold mb-0">Detected Operational Anomalies</h6>
+            <small class="text-muted">Deviations beyond 2 standard deviations or flagged by Isolation Forest</small>
+        </div>
+        <span class="badge bg-warning text-dark">Non-Defamatory Review Guidance</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Operational Metric</th>
+                    <th>Observed Value</th>
+                    <th>Baseline Mean</th>
+                    <th>Z-Score</th>
+                    <th>Investigation Guidance Tag</th>
+                </tr>
+            </thead>
+            <tbody id="anomaliesTableBody">
+                <tr><td colspan="6" class="text-center py-3 text-muted">Analyzing operational patterns...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/charts.js"></script>
+<script>
+    let trendChartInstance = null;
+
+    async function loadAnalyticsDeepDive() {
+        const mineId = document.getElementById("analyticsMineSelect").value;
+        const res = await API.get("/api/analytics/trends-anomalies", { mine_id: mineId });
+        if (!res || !res.success || !res.data) return;
+
+        const d = res.data;
+
+        // Render Chart
+        if (trendChartInstance) trendChartInstance.destroy();
+        trendChartInstance = ChartHelpers.renderProductionTrend("trendChart", d.time_series);
+
+        // Render Anomalies
+        const tbody = document.getElementById("anomaliesTableBody");
+        const allAnomalies = [...(d.production_anomalies || []), ...(d.attendance_anomalies || [])];
+
+        if (allAnomalies.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-success"><i class="bi bi-check-circle me-1"></i> No statistical anomalies detected across the observation window.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = allAnomalies.map(a => `
+            <tr>
+                <td><strong>${a.date}</strong></td>
+                <td><span class="badge bg-secondary">${a.metric}</span></td>
+                <td><span class="fw-bold text-danger">${a.observed_value}</span></td>
+                <td>${a.baseline_mean}</td>
+                <td><span class="badge bg-warning text-dark">${a.z_score} &sigma;</span></td>
+                <td><span class="badge bg-danger bg-opacity-10 text-danger border border-danger">${a.status_tag}</span></td>
+            </tr>
+        `).join("");
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("analyticsMineSelect");
+            mRes.data.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m._id;
+                opt.textContent = m.mine_name;
+                sel.appendChild(opt);
+            });
+        }
+        loadAnalyticsDeepDive();
+    });
+</script>
+{% endblock %}

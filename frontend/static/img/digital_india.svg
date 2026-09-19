@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 55" width="100%" height="100%">
+  <!-- Digital India Vector Representation -->
+  <g transform="translate(10, 5)">
+    <!-- Tricolor Dynamic Swooshes / Waves -->
+    <path d="M5 28 C12 16, 26 12, 38 18 C30 18, 20 22, 14 30 Z" fill="#ff9933" />
+    <path d="M12 30 C20 24, 30 23, 40 27 C30 28, 22 32, 18 36 Z" fill="#003366" />
+    <path d="M16 36 C24 33, 34 33, 42 37 C34 38, 26 42, 22 46 Z" fill="#138808" />
+    <!-- Ashoka Chakra Mini Center -->
+    <circle cx="26" cy="27" r="4.5" fill="none" stroke="#000088" stroke-width="1"/>
+    <circle cx="26" cy="27" r="1" fill="#000088"/>
+  </g>
+  <!-- Typography -->
+  <text x="58" y="24" font-family="'Segoe UI', 'Arial', sans-serif" font-weight="900" font-size="16" fill="#003366" letter-spacing="-0.5">Digital</text>
+  <text x="108" y="24" font-family="'Segoe UI', 'Arial', sans-serif" font-weight="900" font-size="16" fill="#ff9933" letter-spacing="-0.5">India</text>
+  <text x="58" y="36" font-family="'Segoe UI', 'Arial', sans-serif" font-weight="600" font-size="6.5" fill="#138808" letter-spacing="1">POWER TO EMPOWER</text>
+</svg>

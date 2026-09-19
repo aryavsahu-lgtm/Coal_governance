@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Inspections Lifecycle | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Statutory Inspections Lifecycle</h4>
+        <p class="text-muted small mb-0">Scheduled &bull; Assigned &bull; In Progress &bull; Submitted &bull; Reviewed &bull; Closed</p>
+    </div>
+    <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#newInspectionModal">
+        <i class="bi bi-calendar-plus me-1"></i> Schedule Inspection
+    </button>
+</div>
+
+<!-- Inspections List -->
+<div class="card border-0 shadow-sm p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID & Type</th>
+                    <th>Location / Zone</th>
+                    <th>Assigned Officer</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Lifecycle Action</th>
+                </tr>
+            </thead>
+            <tbody id="inspectionsTableBody">
+                <tr><td colspan="6" class="text-center py-4 text-muted">Loading inspections...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: New Inspection -->
+<div class="modal fade" id="newInspectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Schedule Inspection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleCreateInspection(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Target Mine</label>
+                        <select id="inspMine" class="form-select" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Inspection Type</label>
+                        <select id="inspType" class="form-select">
+                            <option value="ROUTINE_SAFETY">Routine Mine Safety Audit</option>
+                            <option value="DGMS_SURPRISE">DGMS Surprise Inspection</option>
+                            <option value="ENVIRONMENTAL">MoEFCC Environmental Clearance Audit</option>
+                            <option value="ELECTRICAL_MECHANICAL">HEMM & Substation Machinery Audit</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Location / Bench Name</label>
+                        <input type="text" id="inspLoc" class="form-control" placeholder="e.g. Haul Road North & Pit Face 2" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Assign to Officer (Optional)</label>
+                        <select id="inspOfficer" class="form-select">
+                            <option value="">Unassigned (Open pool)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Schedule Inspection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Submit Inspection Observations -->
+<div class="modal fade" id="submitInspModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Submit Field Observations</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleSubmitInspection(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="submitInspId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Severity Assessment</label>
+                        <select id="inspSeverity" class="form-select">
+                            <option value="LOW">LOW - Minor housekeeping</option>
+                            <option value="MEDIUM">MEDIUM - Cautionary deficiency</option>
+                            <option value="HIGH">HIGH - Safety hazard requiring CAPA</option>
+                            <option value="CRITICAL">CRITICAL - Imminent danger</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Observations & Remarks</label>
+                        <textarea id="inspRemarks" class="form-control" rows="4" required placeholder="Detail all statutory observations, bench conditions, or ventilation readings..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Submit for Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadInspections() {
+        const res = await API.get("/api/inspections");
+        const tbody = document.getElementById("inspectionsTableBody");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No inspections logged.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = res.data.map(i => {
+            let actionBtn = "";
+            if (i.status === "ASSIGNED" || i.status === "SCHEDULED") {
+                actionBtn = `<button class="btn btn-xs btn-outline-primary" onclick="startInspection('${i._id}')">Start</button>`;
+            } else if (i.status === "IN_PROGRESS") {
+                actionBtn = `<button class="btn btn-xs btn-dark" onclick="openSubmitModal('${i._id}')">Submit Findings</button>`;
+            } else if (i.status === "SUBMITTED") {
+                actionBtn = `<button class="btn btn-xs btn-success" onclick="reviewInspection('${i._id}')">Approve Review</button>`;
+            } else if (i.status === "REVIEWED") {
+                actionBtn = `<button class="btn btn-xs btn-outline-dark" onclick="closeInspection('${i._id}')">Formal Close</button>`;
+            } else {
+                actionBtn = `<span class="text-muted small"><i class="bi bi-check2-all"></i> Closed</span>`;
+            }
+
+            return `
+                <tr>
+                    <td>
+                        <div class="fw-bold">${i.inspection_type}</div>
+                        <small class="text-muted"><code>#${i._id.substring(0, 8)}</code></small>
+                    </td>
+                    <td>${i.location}</td>
+                    <td>${i.officer_id ? 'Officer Assigned' : '<span class="badge bg-secondary">Unassigned</span>'}</td>
+                    <td><span class="badge badge-${i.severity.toLowerCase()}">${i.severity}</span></td>
+                    <td><span class="badge bg-light text-dark border">${i.status}</span></td>
+                    <td>${actionBtn}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    async function startInspection(id) {
+        const res = await API.post(`/api/inspections/${id}/start`);
+        if (res && res.success) {
+            API.showToast("Inspection marked In Progress", "info");
+            loadInspections();
+        }
+    }
+
+    function openSubmitModal(id) {
+        document.getElementById("submitInspId").value = id;
+        new bootstrap.Modal(document.getElementById("submitInspModal")).show();
+    }
+
+    async function handleSubmitInspection(e) {
+        e.preventDefault();
+        const id = document.getElementById("submitInspId").value;
+        const severity = document.getElementById("inspSeverity").value;
+        const remarks = document.getElementById("inspRemarks").value;
+
+        const res = await API.post(`/api/inspections/${id}/submit`, {
+            severity,
+            remarks,
+            observations: [{ text: remarks }]
+        });
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("submitInspModal")).hide();
+            API.showToast("Inspection findings submitted for review", "success");
+            loadInspections();
+        }
+    }
+
+    async function reviewInspection(id) {
+        const res = await API.post(`/api/inspections/${id}/review`, { remarks: "Approved by safety manager" });
+        if (res && res.success) {
+            API.showToast("Inspection reviewed successfully", "success");
+            loadInspections();
+        }
+    }
+
+    async function closeInspection(id) {
+        const res = await API.post(`/api/inspections/${id}/close`, { closure_remarks: "Statutory inspection verified and closed" });
+        if (res && res.success) {
+            API.showToast("Inspection closed", "success");
+            loadInspections();
+        }
+    }
+
+    async function handleCreateInspection(e) {
+        e.preventDefault();
+        const payload = {
+            mine_id: document.getElementById("inspMine").value,
+            inspection_type: document.getElementById("inspType").value,
+            location: document.getElementById("inspLoc").value,
+            officer_id: document.getElementById("inspOfficer").value || null
+        };
+        const res = await API.post("/api/inspections", payload);
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("newInspectionModal")).hide();
+            API.showToast("Inspection scheduled successfully", "success");
+            loadInspections();
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("inspMine");
+            sel.innerHTML = mRes.data.map(m => `<option value="${m._id}">${m.mine_name}</option>`).join("");
+        }
+
+        const uRes = await API.get("/api/auth/users?role=INSPECTION_OFFICER");
+        if (uRes && uRes.success) {
+            const oSel = document.getElementById("inspOfficer");
+            uRes.data.forEach(u => {
+                const opt = document.createElement("option");
+                opt.value = u._id;
+                opt.textContent = `${u.name} (${u.email})`;
+                oSel.appendChild(opt);
+            });
+        }
+        loadInspections();
+    });
+</script>
+{% endblock %}

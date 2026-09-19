@@ -1,0 +1,832 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | CoalGov-AI Platform{% endblock %}
+
+{% block content %}
+<!-- STATUTORY COMMAND BANNER (MATCHING SCREENSHOT) -->
+<div class="card border-0 mb-4 text-white overflow-hidden shadow-sm" style="background: radial-gradient(circle at 70% 30%, #003366 0%, #001f3f 70%, #061325 100%); border-radius: 12px;">
+    <div class="card-body p-4 position-relative">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white text-dark fw-bold mb-2 shadow-sm" style="font-size: 0.75rem; border: 1.5px solid #f59e0b;">
+                    <i class="bi bi-shield-fill-check text-warning"></i> STATUTORY COAL GOVERNANCE PLATFORM
+                </div>
+                <h3 class="fw-bold text-white mb-1">AI-Based Smart Governance for Coal Mines</h3>
+                <h5 class="fw-bold text-warning mb-2" style="font-size: 1.15rem;">Coal Mine Safety, Governance &amp; Compliance Command Center</h5>
+                <p class="text-light opacity-75 small mb-0" style="max-width: 760px;">
+                    Centralized statutory surveillance monitoring strata displacement, CMR Reg. 105 air telematics, and real-time algorithmic risk factors across all active mine concessions.
+                </p>
+            </div>
+            <div class="d-flex flex-column gap-2 text-md-end">
+                <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-2 fw-bold">
+                    <i class="bi bi-broadcast me-1"></i> LIVE TELEMETRY STREAM ACTIVE
+                </span>
+                <span class="small text-light opacity-75">DGMS Dhanbad Central Node: Synced</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4 FLOATING METRIC STAT CARDS (FROM SCREENSHOT) -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="floating-stat-box">
+            <div class="stat-round-icon blue">
+                <i class="bi bi-layers-fill"></i>
+            </div>
+            <div>
+                <div class="floating-stat-val" id="dashTopStrata">847 Units</div>
+                <div class="floating-stat-label">SCAMP Strata Monitoring</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="floating-stat-box">
+            <div class="stat-round-icon red">
+                <i class="bi bi-activity"></i>
+            </div>
+            <div>
+                <div class="floating-stat-val" id="dashTopGas">CMR Reg. 105</div>
+                <div class="floating-stat-label">Gas Sensors Active</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="floating-stat-box">
+            <div class="stat-round-icon green">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div>
+                <div class="floating-stat-val" id="dashTopComp">99.4% Verified</div>
+                <div class="floating-stat-label">DGMS Statutory Compliance</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="floating-stat-box">
+            <div class="stat-round-icon amber">
+                <i class="bi bi-link-45deg"></i>
+            </div>
+            <div>
+                <div class="floating-stat-val" id="dashTopAudit">Block #14 Active</div>
+                <div class="floating-stat-label">SHA-256 Crypto Audit Stream</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ALL-ROLE CORE COMMAND MODULES (UNIVERSAL DASHBOARD ACCESS) -->
+<div class="row g-3 mb-4">
+    <!-- 1. MINE GIS MAP -->
+    <div class="col-lg-3 col-md-6">
+        <a href="/gis-map" class="text-decoration-none">
+            <div class="card border-0 shadow-sm p-3 h-100 bg-white" style="border-left: 4px solid #0284c7 !important; border-radius: 10px; transition: transform 0.15s ease;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-round-icon blue" style="width: 46px; height: 46px; font-size: 1.25rem;">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="fw-bold text-dark mb-0">Mine GIS Map</h6>
+                            <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size: 0.65rem;">ALL ROLES</span>
+                        </div>
+                        <small class="text-muted d-block mt-1" id="dashUnivGisSub" style="font-size: 0.76rem;">Spatial boundaries, muster stations &amp; telematics</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- 2. HAZARDS & VIOLATIONS -->
+    <div class="col-lg-3 col-md-6">
+        <a href="/violations-board" class="text-decoration-none">
+            <div class="card border-0 shadow-sm p-3 h-100 bg-white" style="border-left: 4px solid #dc2626 !important; border-radius: 10px; transition: transform 0.15s ease;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-round-icon red" style="width: 46px; height: 46px; font-size: 1.25rem;">
+                        <i class="bi bi-exclamation-octagon-fill"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="fw-bold text-dark mb-0">Hazards &amp; Violations</h6>
+                            <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size: 0.65rem;">ALL ROLES</span>
+                        </div>
+                        <small class="text-muted d-block mt-1" id="dashUnivVioSub" style="font-size: 0.76rem;">Report incidents, camera proof &amp; CAPA status</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- 3. SAFETY SOPS & RULES -->
+    <div class="col-lg-3 col-md-6">
+        <a href="/documents-vault" class="text-decoration-none">
+            <div class="card border-0 shadow-sm p-3 h-100 bg-white" style="border-left: 4px solid #16a34a !important; border-radius: 10px; transition: transform 0.15s ease;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-round-icon green" style="width: 46px; height: 46px; font-size: 1.25rem;">
+                        <i class="bi bi-file-earmark-check-fill"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="fw-bold text-dark mb-0">Safety SOPs &amp; Rules</h6>
+                            <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.65rem;">ALL ROLES</span>
+                        </div>
+                        <small class="text-muted d-block mt-1" id="dashUnivDocSub" style="font-size: 0.76rem;">SOP guidelines, safety rules &amp; contract OCR</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- 4. AI SAFETY ASSISTANT -->
+    <div class="col-lg-3 col-md-6">
+        <a href="/regulatory-assistant" class="text-decoration-none">
+            <div class="card border-0 shadow-sm p-3 h-100 bg-white" style="border-left: 4px solid #d97706 !important; border-radius: 10px; transition: transform 0.15s ease;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-round-icon amber" style="width: 46px; height: 46px; font-size: 1.25rem;">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="fw-bold text-dark mb-0">AI Safety Assistant</h6>
+                            <span class="badge bg-warning bg-opacity-10 text-warning text-dark" style="font-size: 0.65rem;">ALL ROLES</span>
+                        </div>
+                        <small class="text-muted d-block mt-1" id="dashUnivAiSub" style="font-size: 0.76rem;">Instant DGMS, CMR 2017 &amp; contract Q&amp;A</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <h4 class="fw-bold mb-1" id="dashGreeting">Operational Governance Dashboard</h4>
+            <span id="dashRoleBadge" class="badge bg-dark">User</span>
+        </div>
+        <p class="text-muted small mb-0" id="dashSub">Centralized statutory compliance &amp; safety command center</p>
+    </div>
+    <div class="d-flex gap-2">
+        <select class="form-select form-select-sm" id="mineSelector" style="width: 260px;" onchange="loadDashboardData()">
+            <option value="">All Mines (Corporate Scope)</option>
+        </select>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadDashboardData()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<!-- Stat Cards Row (Dynamic per Role) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase" id="card1Title">Statutory Compliance</div>
+                    <h3 class="fw-bold my-1" id="statCompliancePct">--%</h3>
+                    <small class="text-success" id="statComplianceCompliant">-- compliant</small>
+                </div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success" id="card1Icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase" id="card2Title">Open Violations</div>
+                    <h3 class="fw-bold my-1 text-danger" id="statOpenViolations">--</h3>
+                    <small class="text-danger" id="statCriticalViolations">-- critical</small>
+                </div>
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger" id="card2Icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase" id="card3Title">Inspections Completed</div>
+                    <h3 class="fw-bold my-1" id="statInspectionsRate">--%</h3>
+                    <small class="text-muted" id="statInspectionsTotal">-- total logged</small>
+                </div>
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary" id="card3Icon">
+                    <i class="bi bi-card-checklist"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase" id="card4Title">Overdue Actions (CAPA)</div>
+                    <h3 class="fw-bold my-1 text-warning" id="statOverdueCapa">--</h3>
+                    <small class="text-muted" id="statCapaRate">--% verified</small>
+                </div>
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning" id="card4Icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Explainable Risk Row -->
+<div class="row g-3 mb-4">
+    <!-- Explainable Risk Card -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">Explainable Safety Risk Score</h6>
+                <span class="badge" id="riskLevelBadge">--</span>
+            </div>
+            <div class="text-center my-3">
+                <h1 class="display-4 fw-bold mb-0" id="riskScoreVal">--</h1>
+                <div class="text-muted small">Risk Index out of 100</div>
+            </div>
+            <div class="risk-meter mb-3">
+                <div class="risk-meter-fill bg-success" id="riskMeterBar" style="width: 20%;"></div>
+            </div>
+            <h6 class="small fw-bold text-uppercase text-secondary mb-2">Transparent Contributing Factors:</h6>
+            <ul class="list-group list-group-flush small" id="riskFactorsList">
+                <li class="list-group-item text-muted px-0">Loading risk breakdown...</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Compliance Doughnut -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3">
+            <h6 class="fw-bold mb-3">Compliance Requirements Breakdown</h6>
+            <div style="height: 240px; position: relative;">
+                <canvas id="complianceChart"></canvas>
+            </div>
+            <div class="d-flex justify-content-around text-center mt-3 pt-2 border-top small">
+                <div><span class="text-success fw-bold">&bull;</span> Compliant</div>
+                <div><span class="text-warning fw-bold">&bull;</span> Pending Action</div>
+                <div><span class="text-danger fw-bold">&bull;</span> Non-Compliant</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Severity Bar Chart -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3">
+            <h6 class="fw-bold mb-3">Violations by Statutory Severity</h6>
+            <div style="height: 240px; position: relative;">
+                <canvas id="severityChart"></canvas>
+            </div>
+            <div class="text-center mt-3 pt-2 border-top text-muted small">
+                Categorized under CMR 2017 Risk Tiers
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Role-Specific Action Table & Operational Worktiles Row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0" id="tableSectionTitle">Active Safety Violations & CAPA Status</h6>
+                <a href="/violations-board" id="tableViewAllLink" class="btn btn-sm btn-link text-decoration-none">View All Records &rarr;</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small mb-0">
+                    <thead class="table-light" id="dashTableHead">
+                        <tr>
+                            <th>ID</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentViolationsBody">
+                        <tr><td colspan="6" class="text-center py-3 text-muted">Loading records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0">Role Actions & Shortcuts</h6>
+                <span class="badge bg-secondary small" id="shortcutRoleBadge">Role Tasks</span>
+            </div>
+            <div class="d-grid gap-2" id="roleShortcutsContainer">
+                <!-- Populated dynamically per role in JS -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/charts.js"></script>
+<script>
+    let compChartInstance = null;
+    let sevChartInstance = null;
+
+    async function initDashboard() {
+        if (window.location.search.includes("unauthorized=1")) {
+            API.showToast("Access Restricted: Your role does not permit access to that module.", "warning");
+        }
+
+        const user = API.getCurrentUser() || {};
+        applyRoleDashboardCustomization(user);
+
+        // Load Mines into selector
+        const res = await API.get("/api/mines");
+        if (res && res.success && res.data) {
+            const selector = document.getElementById("mineSelector");
+            res.data.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m._id;
+                opt.textContent = `${m.mine_name} (${m.mine_code})`;
+                selector.appendChild(opt);
+            });
+        }
+        loadDashboardData();
+    }
+
+    function applyRoleDashboardCustomization(user) {
+        const role = user.role || "USER";
+        const badge = document.getElementById("dashRoleBadge");
+        const greeting = document.getElementById("dashGreeting");
+        const sub = document.getElementById("dashSub");
+        const shortcutBadge = document.getElementById("shortcutRoleBadge");
+        const shortcutsCont = document.getElementById("roleShortcutsContainer");
+
+        badge.textContent = formatRole(role);
+        shortcutBadge.textContent = `${formatRole(role)} Tasks`;
+
+        let shortcutsHtml = "";
+
+        if (role === "CONTRACTOR") {
+            greeting.textContent = `Contractor Safety & CAPA Portal`;
+            sub.textContent = `Manage workforce safety compliance, address corrective action directives & submit photographic rectification proof`;
+            badge.className = "badge bg-warning text-dark";
+
+            document.getElementById("card1Title").textContent = "Contractor Safety Score";
+            document.getElementById("card2Title").textContent = "My Assigned CAPAs";
+            document.getElementById("card3Title").textContent = "Worker PPE Compliance";
+            document.getElementById("card4Title").textContent = "Expiring Certifications";
+
+            document.getElementById("tableSectionTitle").textContent = "My Assigned Corrective Action Directives (CAPA)";
+            document.getElementById("tableViewAllLink").href = "/violations-board";
+            document.getElementById("tableViewAllLink").textContent = "Fulfill Directives &rarr;";
+
+            shortcutsHtml = `
+                <a href="/violations-board" class="btn btn-warning text-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-camera-fill text-dark fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Submit Rectification Proof (Camera)</div>
+                        <small class="text-dark" style="font-size: 0.72rem;">Snap live photo proof of hazard mitigation</small>
+                    </div>
+                </a>
+                <a href="/documents-vault" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-file-earmark-arrow-up text-primary fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Upload Safety Induction Certificates</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">OCR verification of worker medicals & training</small>
+                    </div>
+                </a>
+                <a href="/regulatory-assistant" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-robot text-info fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Statutory Contractor Obligations</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Query CMR 2017 & DGMS contractor clauses</small>
+                    </div>
+                </a>
+            `;
+        } else if (role === "INSPECTION_OFFICER") {
+            greeting.textContent = `Statutory Inspector Workspace`;
+            sub.textContent = `Conduct CMR 2017 statutory inspections, record mobile field observations & snap geo-tagged violations`;
+            badge.className = "badge bg-primary";
+
+            document.getElementById("card1Title").textContent = "Statutory Compliance";
+            document.getElementById("card2Title").textContent = "Inspections Scheduled";
+            document.getElementById("card3Title").textContent = "Checklists Completed";
+            document.getElementById("card4Title").textContent = "Field Violations Logged";
+
+            document.getElementById("tableSectionTitle").textContent = "Today's Statutory Inspections & Observations";
+            document.getElementById("tableViewAllLink").href = "/inspections-board";
+            document.getElementById("tableViewAllLink").textContent = "View Inspections &rarr;";
+
+            shortcutsHtml = `
+                <a href="/inspections-board" class="btn btn-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-clipboard2-check text-success fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Conduct CMR 2017 Statutory Inspection</div>
+                        <small class="text-secondary" style="font-size: 0.72rem;">Step-by-step statutory checklist intake</small>
+                    </div>
+                </a>
+                <a href="/field-reporting" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-camera-fill text-warning fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Capture Live Field Violation (Camera + GPS)</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Snap on-ground proof with live coordinates</small>
+                    </div>
+                </a>
+                <a href="/ai-vision-studio" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-camera-video text-primary fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">AI Vision PPE Scan</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Live camera / image YOLOv8 inference</small>
+                    </div>
+                </a>
+                <a href="/regulatory-assistant" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-robot text-info fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Ask Statutory Legal Assistant</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Mines Act 1952 & CMR 2017 citations</small>
+                    </div>
+                </a>
+            `;
+        } else if (role === "SAFETY_OFFICER") {
+            greeting.textContent = `Mine Safety & Risk Mitigation Command`;
+            sub.textContent = `Triage open violations, verify contractor CAPA evidence & monitor mine risk indicators`;
+            badge.className = "badge bg-danger";
+
+            document.getElementById("card1Title").textContent = "Open Safety Violations";
+            document.getElementById("card2Title").textContent = "CAPA Awaiting Verification";
+            document.getElementById("card3Title").textContent = "Mine Risk Index";
+            document.getElementById("card4Title").textContent = "4-Tier Escalation SLA";
+
+            shortcutsHtml = `
+                <a href="/violations-board" class="btn btn-danger text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-shield-check fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Verify Contractor CAPA Evidence</div>
+                        <small class="text-white-50" style="font-size: 0.72rem;">Review photographic proof & signoff</small>
+                    </div>
+                </a>
+                <a href="/field-reporting" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-camera-fill text-warning fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Log Safety Violation (Camera / AI)</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Dispatch automated corrective action</small>
+                    </div>
+                </a>
+                <a href="/incidents-board" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-radioactive text-danger fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Mine Incident RCA & Inquiry</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Log serious accident inquiry reports</small>
+                    </div>
+                </a>
+                <button type="button" class="btn btn-outline-secondary text-start p-2 d-flex align-items-center w-100" onclick="triggerEscalationSweep()">
+                    <i class="bi bi-clock-history text-secondary fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Trigger 4-Tier Escalation Sweep</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Scan and advance overdue SLA items</small>
+                    </div>
+                </button>
+            `;
+        } else if (role === "ENVIRONMENTAL_OFFICER") {
+            greeting.textContent = `Environmental Monitoring & MoEFCC Portal`;
+            sub.textContent = `Air/water quality surveillance, green belt plantation tracking & statutory eco-compliance`;
+            badge.className = "badge bg-success";
+
+            document.getElementById("card1Title").textContent = "MoEFCC Eco-Compliance";
+            document.getElementById("card2Title").textContent = "Air Quality (PM10/2.5)";
+            document.getElementById("card3Title").textContent = "Water Discharge pH";
+            document.getElementById("card4Title").textContent = "Green Belt Afforestation";
+
+            shortcutsHtml = `
+                <a href="/field-reporting" class="btn btn-success text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-tree fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Submit Environmental Field Report</div>
+                        <small class="text-white-50" style="font-size: 0.72rem;">Log dust, effluent or buffer observations</small>
+                    </div>
+                </a>
+                <a href="/gis-map" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-map text-success fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Environmental GIS Buffer Zones</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Inspect 500m eco-sensitive boundaries</small>
+                    </div>
+                </a>
+                <a href="/documents-vault" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-file-earmark-text text-primary fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Upload MoEFCC Clearances</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">OCR scan statutory consent certificates</small>
+                    </div>
+                </a>
+                <a href="/regulatory-assistant" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-robot text-info fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">MoEFCC & DGMS Environmental Norms</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">AI statutory assistant for eco-guidelines</small>
+                    </div>
+                </a>
+            `;
+        } else if (role === "CORPORATE_MANAGEMENT") {
+            greeting.textContent = `Corporate Executive Safety & Compliance Center`;
+            sub.textContent = `Multi-subsidiary oversight across ECL & BCCL, macro safety index & board statutory governance`;
+            badge.className = "badge bg-info text-dark";
+
+            document.getElementById("card1Title").textContent = "Corporate Compliance Benchmark";
+            document.getElementById("card2Title").textContent = "Multi-Subsidiary Risk Score";
+            document.getElementById("card3Title").textContent = "Board Tier Escalations";
+            document.getElementById("card4Title").textContent = "Operating Mines";
+
+            shortcutsHtml = `
+                <a href="/analytics-board" class="btn btn-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-graph-up-arrow text-warning fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Executive Safety & Risk Analytics</div>
+                        <small class="text-secondary" style="font-size: 0.72rem;">Multi-subsidiary KPI comparison</small>
+                    </div>
+                </a>
+                <a href="/audit-explorer" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-journal-text text-primary fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Inspect Board Audit Trail</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Verify tamper-evident regulatory records</small>
+                    </div>
+                </a>
+                <a href="/gis-map" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-map text-info fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Subsidiary Spatial GIS Map</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Real-time mine boundaries & hazards</small>
+                    </div>
+                </a>
+                <a href="/compliance-board" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-file-earmark-pdf text-danger fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Export Corporate Safety PDF</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Download ReportLab statutory report</small>
+                    </div>
+                </a>
+            `;
+        } else if (role === "REGULATORY_AUTHORITY") {
+            greeting.textContent = `DGMS Regulatory Oversight & Statutory Audit Portal`;
+            sub.textContent = `Mines Act 1952 enforcement, statutory notices (Form I/II) & independent mine inquiry oversight`;
+            badge.className = "badge bg-dark";
+
+            document.getElementById("card1Title").textContent = "DGMS Inquiries & Accidents";
+            document.getElementById("card2Title").textContent = "CMR Statutory Violations";
+            document.getElementById("card3Title").textContent = "Mine Risk Classification";
+            document.getElementById("card4Title").textContent = "Digital Audit Trail";
+
+            shortcutsHtml = `
+                <a href="/inspections-board" class="btn btn-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-search text-warning fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Review Statutory CMR Inspections</div>
+                        <small class="text-secondary" style="font-size: 0.72rem;">Inspect official mine check records</small>
+                    </div>
+                </a>
+                <a href="/incidents-board" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-radioactive text-danger fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Mine Incident Inquiries & RCA</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Review serious injury investigation findings</small>
+                    </div>
+                </a>
+                <a href="/audit-explorer" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-journal-check text-success fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Statutory Regulatory Audit Trail</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Immutable statutory compliance log</small>
+                    </div>
+                </a>
+                <a href="/compliance-board" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-file-earmark-pdf text-danger fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Generate Official DGMS Compliance PDF</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Download formal statutory audit certificate</small>
+                    </div>
+                </a>
+            `;
+        } else {
+            // SUPER_ADMIN / MINE_OFFICER
+            shortcutsHtml = `
+                <a href="/ai-vision-studio" class="btn btn-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-camera-video text-warning fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Run AI Vision PPE Scan</div>
+                        <small class="text-secondary" style="font-size: 0.72rem;">Analyze images/video with YOLOv8</small>
+                    </div>
+                </a>
+                <a href="/field-reporting" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-camera-fill text-primary fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Live Mobile Field Observation</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Live camera viewfinder & GPS tagging</small>
+                    </div>
+                </a>
+                <a href="/inspections-board" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-clipboard2-check text-success fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Statutory Inspection Lifecycle</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Conduct, submit & review inspections</small>
+                    </div>
+                </a>
+                <a href="/gis-map" class="btn btn-outline-dark text-start p-2 d-flex align-items-center">
+                    <i class="bi bi-map text-info fs-5 me-2"></i>
+                    <div>
+                        <div class="fw-bold" style="font-size: 0.85rem;">Launch GIS Spatial Map</div>
+                        <small class="text-muted" style="font-size: 0.72rem;">Visualize mines, zones & hazard pins</small>
+                    </div>
+                </a>
+            `;
+        }
+
+        shortcutsCont.innerHTML = shortcutsHtml;
+    }
+
+    async function triggerEscalationSweep() {
+        const res = await API.post("/api/rules/escalate-check");
+        if (res && res.success) {
+            API.showToast(`Escalation sweep completed: ${res.data.escalated} items escalated to higher tiers.`, "info");
+            loadDashboardData();
+        }
+    }
+
+    async function loadDashboardData() {
+        const user = API.getCurrentUser() || {};
+        const role = user.role || "USER";
+        const mineId = document.getElementById("mineSelector").value;
+        const res = await API.get("/api/analytics/dashboard", { mine_id: mineId });
+        if (!res || !res.success || !res.data) return;
+
+        const d = res.data;
+
+        // Populate Top Floating KPI Cards from Backend Telematics
+        if (d.kpis) {
+            if (document.getElementById("dashTopStrata")) document.getElementById("dashTopStrata").textContent = d.kpis.scamp_strata_units;
+            if (document.getElementById("dashTopGas")) document.getElementById("dashTopGas").textContent = d.kpis.gas_sensors_active;
+            if (document.getElementById("dashTopComp")) document.getElementById("dashTopComp").textContent = d.kpis.statutory_compliance_pct;
+            if (document.getElementById("dashTopAudit")) document.getElementById("dashTopAudit").textContent = d.kpis.crypto_audit_block;
+        }
+
+        // Populate Universal Command Cards Subtext from Backend
+        if (document.getElementById("dashUnivGisSub")) {
+            const mCount = d.modules_summary ? d.modules_summary.mines_count : (d.violations ? Object.keys(d.violations.by_mine || {}).length : 4);
+            document.getElementById("dashUnivGisSub").textContent = `${mCount} Mining Concessions Active • Spatial Telematics`;
+        }
+        if (document.getElementById("dashUnivVioSub")) {
+            const vOpen = d.violations ? d.violations.open : 0;
+            const vCrit = (d.violations && d.violations.by_severity) ? (d.violations.by_severity.CRITICAL || 0) : 0;
+            document.getElementById("dashUnivVioSub").textContent = `${vOpen} Open Violations (${vCrit} Critical) • Live CAPA`;
+        }
+        if (document.getElementById("dashUnivDocSub")) {
+            const dCount = d.modules_summary ? d.modules_summary.documents_count : 3;
+            document.getElementById("dashUnivDocSub").textContent = `${dCount} Verified SOPs & Contracts (OCR Validated)`;
+        }
+        if (document.getElementById("dashUnivAiSub")) {
+            const rCount = d.modules_summary ? d.modules_summary.ai_rag_docs : 18;
+            document.getElementById("dashUnivAiSub").textContent = `RAG Assistant Synced (${rCount} Knowledge Chunks)`;
+        }
+
+        // Populate stat cards according to active role
+        if (role === "CONTRACTOR") {
+            document.getElementById("statCompliancePct").textContent = "88 / 100";
+            document.getElementById("statComplianceCompliant").textContent = "Low Risk Rating";
+            document.getElementById("statOpenViolations").textContent = "3 Pending";
+            document.getElementById("statCriticalViolations").textContent = "1 Awaiting Safety Signoff";
+            document.getElementById("statInspectionsRate").textContent = "94%";
+            document.getElementById("statInspectionsTotal").textContent = "Shift workforce compliant";
+            document.getElementById("statOverdueCapa").textContent = "1 Expiring";
+            document.getElementById("statCapaRate").textContent = "Medical fitness certificate";
+        } else if (role === "ENVIRONMENTAL_OFFICER") {
+            document.getElementById("statCompliancePct").textContent = "92%";
+            document.getElementById("statComplianceCompliant").textContent = "MoEFCC Guidelines";
+            document.getElementById("statOpenViolations").textContent = "Moderate";
+            document.getElementById("statCriticalViolations").textContent = "Dust suppression active";
+            document.getElementById("statInspectionsRate").textContent = "pH 7.2";
+            document.getElementById("statInspectionsTotal").textContent = "Effluent within limits";
+            document.getElementById("statOverdueCapa").textContent = "82.6%";
+            document.getElementById("statCapaRate").textContent = "12,400 / 15,000 saplings";
+        } else if (role === "REGULATORY_AUTHORITY") {
+            document.getElementById("statCompliancePct").textContent = "2 Active";
+            document.getElementById("statComplianceCompliant").textContent = "Mines Act Section 22";
+            document.getElementById("statOpenViolations").textContent = d.violations.open;
+            document.getElementById("statCriticalViolations").textContent = `${d.violations.by_severity.CRITICAL || 0} critical CMR breaches`;
+            document.getElementById("statInspectionsRate").textContent = "Cat-B";
+            document.getElementById("statInspectionsTotal").textContent = "Moderate DGMS Rating";
+            document.getElementById("statOverdueCapa").textContent = "100%";
+            document.getElementById("statCapaRate").textContent = "Immutable audit log";
+        } else {
+            // General / Inspector / Safety / Admin
+            document.getElementById("statCompliancePct").textContent = `${d.compliance.compliance_percentage}%`;
+            document.getElementById("statComplianceCompliant").textContent = `${d.compliance.compliant} compliant / ${d.compliance.total_requirements} total`;
+
+            document.getElementById("statOpenViolations").textContent = d.violations.open;
+            document.getElementById("statCriticalViolations").textContent = `${d.violations.by_severity.CRITICAL || 0} critical severity`;
+
+            document.getElementById("statInspectionsRate").textContent = `${d.inspections.completion_rate}%`;
+            document.getElementById("statInspectionsTotal").textContent = `${d.inspections.total} total logged`;
+
+            document.getElementById("statOverdueCapa").textContent = d.corrective_actions.overdue_count;
+            document.getElementById("statCapaRate").textContent = `${d.corrective_actions.completion_rate}% verified`;
+        }
+
+        // Explainable Risk Score
+        const risk = d.risk_summary;
+        if (risk) {
+            document.getElementById("riskScoreVal").textContent = risk.risk_score;
+            const badge = document.getElementById("riskLevelBadge");
+            const bar = document.getElementById("riskMeterBar");
+            badge.textContent = risk.risk_level;
+
+            let colorClass = "bg-success";
+            if (risk.risk_level === "CRITICAL") colorClass = "bg-danger";
+            else if (risk.risk_level === "HIGH") colorClass = "bg-warning text-dark";
+            else if (risk.risk_level === "MEDIUM") colorClass = "bg-info";
+
+            badge.className = `badge ${colorClass}`;
+            bar.className = `risk-meter-fill ${colorClass}`;
+            bar.style.width = `${risk.risk_score}%`;
+
+            const factorsList = document.getElementById("riskFactorsList");
+            factorsList.innerHTML = (risk.contributing_factors || []).map(f => `
+                <li class="list-group-item px-0 d-flex align-items-start gap-2">
+                    <i class="bi bi-caret-right-fill text-warning mt-1"></i>
+                    <span>${f}</span>
+                </li>
+            `).join("");
+        }
+
+        // Render Charts
+        if (compChartInstance) compChartInstance.destroy();
+        compChartInstance = ChartHelpers.renderComplianceDoughnut("complianceChart", d.compliance);
+
+        if (sevChartInstance) sevChartInstance.destroy();
+        sevChartInstance = ChartHelpers.renderSeverityBar("severityChart", d.violations.by_severity);
+
+        // Load Table Data tailored to role
+        loadRoleTailoredTable(role, mineId);
+    }
+
+    async function loadRoleTailoredTable(role, mineId) {
+        const res = await API.get("/api/violations", { mine_id: mineId });
+        const tbody = document.getElementById("recentViolationsBody");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No open records found for this scope.</td></tr>';
+            return;
+        }
+
+        const data = res.data.slice(0, 6);
+
+        if (role === "CONTRACTOR") {
+            tbody.innerHTML = data.map(v => `
+                <tr>
+                    <td><code>#${v._id.substring(0, 8)}</code></td>
+                    <td><span class="badge bg-danger">${v.category}</span></td>
+                    <td><span class="text-truncate d-inline-block" style="max-width: 250px;">${v.description}</span></td>
+                    <td><span class="badge badge-${v.severity.toLowerCase()}">${v.severity}</span></td>
+                    <td><span class="badge bg-warning text-dark">ACTION REQUIRED</span></td>
+                    <td>
+                        <a href="/violations-board" class="btn btn-xs btn-warning fw-bold">
+                            <i class="bi bi-camera me-1"></i>Submit Proof
+                        </a>
+                    </td>
+                </tr>
+            `).join("");
+        } else if (role === "INSPECTION_OFFICER") {
+            tbody.innerHTML = data.map(v => `
+                <tr>
+                    <td><code>#${v._id.substring(0, 8)}</code></td>
+                    <td><span class="badge bg-secondary">${v.category}</span></td>
+                    <td><span class="text-truncate d-inline-block" style="max-width: 250px;">${v.description}</span></td>
+                    <td><span class="badge badge-${v.severity.toLowerCase()}">${v.severity}</span></td>
+                    <td><span class="badge bg-light text-dark border">${v.status}</span></td>
+                    <td>
+                        <a href="/inspections-board" class="btn btn-xs btn-dark">
+                            <i class="bi bi-clipboard2-check me-1"></i>Conduct
+                        </a>
+                    </td>
+                </tr>
+            `).join("");
+        } else {
+            tbody.innerHTML = data.map(v => `
+                <tr>
+                    <td><code>#${v._id.substring(0, 8)}</code></td>
+                    <td><span class="badge bg-secondary">${v.category}</span></td>
+                    <td><span class="text-truncate d-inline-block" style="max-width: 250px;">${v.description}</span></td>
+                    <td><span class="badge badge-${v.severity.toLowerCase()}">${v.severity}</span></td>
+                    <td><span class="badge bg-light text-dark border">${v.status}</span></td>
+                    <td><a href="/violations-board" class="btn btn-xs btn-outline-dark">Review</a></td>
+                </tr>
+            `).join("");
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", initDashboard);
+</script>
+{% endblock %}

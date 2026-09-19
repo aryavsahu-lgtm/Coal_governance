@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Contractor Governance & Risk | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Mine Contractor Governance</h4>
+        <p class="text-muted small mb-0">Worker headcount &bull; Statutory permits &bull; Safety violations &bull; Explainable risk index</p>
+    </div>
+    <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#newContractorModal">
+        <i class="bi bi-person-plus me-1"></i> Register Contractor
+    </button>
+</div>
+
+<div class="row g-3" id="contractorsContainer">
+    <div class="col-12 text-center py-5 text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span>Loading registered contractors...
+    </div>
+</div>
+
+<!-- Modal: New Contractor -->
+<div class="modal fade" id="newContractorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Register Contractor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleCreateContractor(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Company Name</label>
+                        <input type="text" id="cCompany" class="form-control" required placeholder="e.g. Apex Earthmovers Pvt Ltd">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Registration / License No.</label>
+                            <input type="text" id="cReg" class="form-control" placeholder="e.g. CON-ECL-2026-092">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Mine Assigned</label>
+                            <select id="cMine" class="form-select" required></select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Contact Email</label>
+                            <input type="email" id="cEmail" class="form-control" required placeholder="director@apex.com">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Workers Deployed</label>
+                            <input type="number" id="cWorkers" class="form-control" value="40" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Register Contractor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: View Contractor Risk Breakdown -->
+<div class="modal fade" id="contractorRiskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-shield-shaded me-2"></i>Explainable Risk Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <h2 class="fw-bold mb-0" id="crModalScore">--</h2>
+                    <span class="badge" id="crModalBadge">--</span>
+                </div>
+                <h6 class="small fw-bold text-uppercase text-secondary mb-2">Contributing Factors:</h6>
+                <ul class="list-group list-group-flush small" id="crModalFactors"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadContractors() {
+        const res = await API.get("/api/contractors");
+        const container = document.getElementById("contractorsContainer");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center py-5 text-muted">No contractors registered yet.</div>';
+            return;
+        }
+
+        container.innerHTML = res.data.map(c => `
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-stat h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="fw-bold mb-0">${c.company_name}</h6>
+                            <small class="text-muted">${c.registration_number}</small>
+                        </div>
+                        <span class="badge ${c.compliance_status === 'COMPLIANT' ? 'bg-success' : 'bg-warning text-dark'}">${c.compliance_status}</span>
+                    </div>
+                    <div class="bg-light p-2 rounded mb-3 small">
+                        <div><i class="bi bi-people me-1"></i> <strong>Workers Deployed:</strong> ${c.workers_count}</div>
+                        <div><i class="bi bi-envelope me-1"></i> ${c.contact_email}</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                        <div>
+                            <small class="text-muted d-block">Safety Risk Index</small>
+                            <span class="fw-bold ${c.risk_score > 50 ? 'text-danger' : 'text-success'}">${c.risk_score} / 100 (${c.risk_level})</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-dark" onclick="viewRisk('${c._id}', '${c.company_name}')">
+                            Risk Breakdown
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    async function viewRisk(id, name) {
+        const res = await API.get(`/api/contractors/${id}/risk`);
+        if (!res || !res.success) return;
+
+        const d = res.data;
+        document.getElementById("crModalScore").textContent = d.risk_score;
+        const badge = document.getElementById("crModalBadge");
+        badge.textContent = d.risk_level;
+        badge.className = `badge ${d.risk_level === 'CRITICAL' ? 'bg-danger' : (d.risk_level === 'HIGH' ? 'bg-warning text-dark' : 'bg-success')}`;
+
+        const fl = document.getElementById("crModalFactors");
+        fl.innerHTML = (d.contributing_factors || []).map(f => `<li class="list-group-item px-0"><i class="bi bi-dot"></i> ${f}</li>`).join("");
+
+        new bootstrap.Modal(document.getElementById("contractorRiskModal")).show();
+    }
+
+    async function handleCreateContractor(e) {
+        e.preventDefault();
+        const payload = {
+            company_name: document.getElementById("cCompany").value,
+            registration_number: document.getElementById("cReg").value,
+            mine_id: document.getElementById("cMine").value,
+            contact_email: document.getElementById("cEmail").value,
+            workers_count: parseInt(document.getElementById("cWorkers").value)
+        };
+        const res = await API.post("/api/contractors", payload);
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("newContractorModal")).hide();
+            API.showToast("Contractor registered successfully", "success");
+            loadContractors();
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("cMine");
+            sel.innerHTML = mRes.data.map(m => `<option value="${m._id}">${m.mine_name}</option>`).join("");
+        }
+        loadContractors();
+    });
+</script>
+{% endblock %}

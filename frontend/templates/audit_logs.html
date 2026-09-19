@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Immutable Audit Trail | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Immutable Statutory Audit Trail</h4>
+        <p class="text-muted small mb-0">Append-only audit log tracking every user action, state change, and statutory escalation</p>
+    </div>
+    <div class="d-flex gap-2">
+        <select id="auditActionFilter" class="form-select form-select-sm" style="width: 180px;" onchange="loadAuditLogs()">
+            <option value="">All Actions</option>
+            <option value="CREATE">CREATE</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="ASSIGN">ASSIGN</option>
+            <option value="APPROVE">APPROVE</option>
+            <option value="VERIFY">VERIFY</option>
+            <option value="CLOSE">CLOSE</option>
+            <option value="ESCALATE">ESCALATE</option>
+        </select>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadAuditLogs()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>Action</th>
+                    <th>Entity & Target ID</th>
+                    <th>User & Role</th>
+                    <th>State Details / Delta</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody id="auditTableBody">
+                <tr><td colspan="6" class="text-center py-4 text-muted">Loading audit logs...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadAuditLogs() {
+        const action = document.getElementById("auditActionFilter").value;
+        const res = await API.get("/api/audit-logs", { action: action, limit: 100 });
+        const tbody = document.getElementById("auditTableBody");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No audit logs found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = res.data.map(l => {
+            let actionBadge = "bg-secondary";
+            if (l.action === "CREATE") actionBadge = "bg-primary";
+            else if (l.action === "VERIFY" || l.action === "APPROVE") actionBadge = "bg-success";
+            else if (l.action === "ESCALATE") actionBadge = "bg-danger";
+            else if (l.action === "CLOSE") actionBadge = "bg-dark";
+
+            const details = l.new_value ? JSON.stringify(l.new_value) : (l.notes || 'Status transition');
+
+            return `
+                <tr>
+                    <td><code>${l.timestamp ? l.timestamp.substring(0, 19).replace('T', ' ') : 'N/A'}</code></td>
+                    <td><span class="badge ${actionBadge}">${l.action}</span></td>
+                    <td>
+                        <strong>${l.entity}</strong><br>
+                        <small class="text-muted"><code>#${(l.entity_id || '').substring(0, 10)}</code></small>
+                    </td>
+                    <td>
+                        <div>${l.user_email || 'System'}</div>
+                        <small class="text-muted">${l.user_role || 'SYSTEM'}</small>
+                    </td>
+                    <td><code class="text-muted text-truncate d-inline-block" style="max-width: 280px;">${details}</code></td>
+                    <td><small class="text-muted">${l.ip_address || '127.0.0.1'}</small></td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    window.addEventListener("DOMContentLoaded", loadAuditLogs);
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#075985" />
+      <stop offset="100%" stop-color="#0c4a6e" />
+    </linearGradient>
+  </defs>
+  <!-- Circular outer ring -->
+  <circle cx="50" cy="50" r="46" fill="#ffffff" stroke="#075985" stroke-width="3"/>
+  <circle cx="50" cy="50" r="41" fill="none" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <circle cx="50" cy="50" r="32" fill="url(#sealGrad)"/>
+  
+  <!-- Crossed Hammer and Pick -->
+  <g stroke="#ffffff" stroke-width="3.5" stroke-linecap="round">
+    <!-- Pickaxe -->
+    <line x1="30" y1="70" x2="70" y2="30"/>
+    <path d="M63 23 Q72 26 77 37" fill="none" stroke="#f59e0b" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Sledge Hammer -->
+    <line x1="70" y1="70" x2="30" y2="30"/>
+    <rect x="23" y="23" width="14" height="7" rx="1.5" transform="rotate(45 30 26.5)" fill="#f59e0b" stroke="none"/>
+  </g>
+  <!-- Circular text path or text -->
+  <circle cx="50" cy="50" r="3" fill="#ffffff"/>
+  <path id="textArcTop" d="M 15 50 A 35 35 0 0 1 85 50" fill="none"/>
+  <path id="textArcBottom" d="M 85 50 A 35 35 0 0 1 15 50" fill="none"/>
+  <text font-family="'Segoe UI', sans-serif" font-size="5.5" font-weight="bold" fill="#075985" letter-spacing="1.2">
+    <textPath href="#textArcTop" startOffset="50%" text-anchor="middle">COAL INDIA LIMITED</textPath>
+  </text>
+  <text font-family="'Segoe UI', sans-serif" font-size="5.5" font-weight="bold" fill="#075985" letter-spacing="1">
+    <textPath href="#textArcBottom" startOffset="50%" text-anchor="middle">DGMS STATUTORY</textPath>
+  </text>
+</svg>

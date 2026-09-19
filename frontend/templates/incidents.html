@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Incident Management & RCA | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Mine Incident Management & RCA</h4>
+        <p class="text-muted small mb-0">Statutory reporting &bull; Investigation &bull; Root Cause Analysis (RCA) &bull; Verified Closure</p>
+    </div>
+    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#newIncidentModal">
+        <i class="bi bi-exclamation-octagon me-1"></i> Report Hazardous Incident
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID & Type</th>
+                    <th>Location</th>
+                    <th>Severity</th>
+                    <th>Reported Date</th>
+                    <th>Investigation Status</th>
+                    <th>Root Cause (RCA)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="incidentsTableBody">
+                <tr><td colspan="7" class="text-center py-4 text-muted">Loading incidents...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: New Incident -->
+<div class="modal fade" id="newIncidentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Statutory Incident Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleCreateIncident(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Target Mine</label>
+                        <select id="incMine" class="form-select" required></select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Incident Type</label>
+                            <select id="incType" class="form-select">
+                                <option value="MACHINERY_COLLISION">HEMM Collision</option>
+                                <option value="SLOPE_FAILURE">Quarry Slope / Bench Failure</option>
+                                <option value="ROOF_FALL">Underground Roof Fall</option>
+                                <option value="GAS_EXCEEDANCE">Methane / CO Inrush</option>
+                                <option value="ELECTRICAL_FLASH">Electrical Flashover</option>
+                                <option value="INJURY">Personnel Injury</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Severity Tier</label>
+                            <select id="incSev" class="form-select">
+                                <option value="LOW">LOW</option>
+                                <option value="MEDIUM">MEDIUM</option>
+                                <option value="HIGH" selected>HIGH</option>
+                                <option value="CRITICAL">CRITICAL (DGMS Alert)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Specific Location</label>
+                        <input type="text" id="incLoc" class="form-control" placeholder="e.g. Haul Road North Junction 4" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Description of Occurrence</label>
+                        <textarea id="incDesc" class="form-control" rows="3" required placeholder="Describe what occurred, machinery involved, immediate actions taken..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Submit Incident Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Advance Status & RCA -->
+<div class="modal fade" id="advanceStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Investigation Status & RCA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleAdvanceIncident(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="advanceIncId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Advance Investigation Stage</label>
+                        <select id="advStatusVal" class="form-select">
+                            <option value="UNDER_INVESTIGATION">UNDER_INVESTIGATION</option>
+                            <option value="ROOT_CAUSE_ANALYSIS">ROOT_CAUSE_ANALYSIS</option>
+                            <option value="CORRECTIVE_ACTION">CORRECTIVE_ACTION</option>
+                            <option value="VERIFICATION">VERIFICATION</option>
+                            <option value="CLOSED">CLOSED</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Root Cause Identified</label>
+                        <input type="text" id="advRootCause" class="form-control" placeholder="e.g. Failure of Audio-Visual Reverse Alarm (AVRA)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Mandated Corrective Action</label>
+                        <textarea id="advCAPA" class="form-control" rows="2" placeholder="e.g. Pre-shift inspection checklist revision for all 100T dumpers..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-dark">Update Investigation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadIncidents() {
+        const res = await API.get("/api/incidents");
+        const tbody = document.getElementById("incidentsTableBody");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No incidents recorded.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = res.data.map(inc => `
+            <tr>
+                <td>
+                    <div class="fw-bold">${inc.incident_type}</div>
+                    <small class="text-muted"><code>#${inc._id.substring(0, 8)}</code></small>
+                </td>
+                <td>${inc.location}</td>
+                <td><span class="badge badge-${inc.severity.toLowerCase()}">${inc.severity}</span></td>
+                <td>${inc.reported_at ? inc.reported_at.substring(0, 16).replace('T', ' ') : 'N/A'}</td>
+                <td><span class="badge bg-light text-dark border">${inc.investigation_status}</span></td>
+                <td><span class="text-truncate d-inline-block text-muted" style="max-width: 180px;">${inc.root_cause || 'Investigation pending'}</span></td>
+                <td>
+                    ${inc.closure_status === 'CLOSED'
+                        ? '<span class="text-success small fw-bold"><i class="bi bi-check-all"></i> Closed</span>'
+                        : `<button class="btn btn-xs btn-outline-dark" onclick="openAdvanceModal('${inc._id}')">Advance Stage</button>`
+                    }
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function openAdvanceModal(incId) {
+        document.getElementById("advanceIncId").value = incId;
+        new bootstrap.Modal(document.getElementById("advanceStatusModal")).show();
+    }
+
+    async function handleAdvanceIncident(e) {
+        e.preventDefault();
+        const id = document.getElementById("advanceIncId").value;
+        const status = document.getElementById("advStatusVal").value;
+        const root_cause = document.getElementById("advRootCause").value;
+        const corrective_action = document.getElementById("advCAPA").value;
+
+        const res = await API.post(`/api/incidents/${id}/advance-status`, {
+            status,
+            root_cause,
+            corrective_action
+        });
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("advanceStatusModal")).hide();
+            API.showToast("Incident investigation status advanced", "success");
+            loadIncidents();
+        }
+    }
+
+    async function handleCreateIncident(e) {
+        e.preventDefault();
+        const payload = {
+            mine_id: document.getElementById("incMine").value,
+            incident_type: document.getElementById("incType").value,
+            severity: document.getElementById("incSev").value,
+            location: document.getElementById("incLoc").value,
+            description: document.getElementById("incDesc").value
+        };
+        const res = await API.post("/api/incidents", payload);
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("newIncidentModal")).hide();
+            API.showToast("Incident reported and safety team alerted!", "danger");
+            loadIncidents();
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("incMine");
+            sel.innerHTML = mRes.data.map(m => `<option value="${m._id}">${m.mine_name}</option>`).join("");
+        }
+        loadIncidents();
+    });
+</script>
+{% endblock %}

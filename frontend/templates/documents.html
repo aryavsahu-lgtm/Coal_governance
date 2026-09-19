@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Document Vault & OCR | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Statutory Document Vault & OCR Engine</h4>
+        <p class="text-muted small mb-0">Automated text extraction &bull; Expiry date detection &bull; Compliance violation warnings</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-dark btn-sm" onclick="scanExpiries()">
+            <i class="bi bi-clock-history me-1"></i> Scan Document Expiries
+        </button>
+        <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+            <i class="bi bi-upload me-1"></i> Upload Statutory Certificate
+        </button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm p-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Filename & Number</th>
+                    <th>Document Type</th>
+                    <th>Issuing Authority</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>OCR Engine</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="docsTableBody">
+                <tr><td colspan="7" class="text-center py-4 text-muted">Loading statutory documents...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Upload Document -->
+<div class="modal fade" id="uploadDocModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload & Process Statutory Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="handleUploadDoc(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Target Mine</label>
+                        <select id="docMine" class="form-select" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Document Classification</label>
+                        <select id="docType" class="form-select">
+                            <option value="CONTRACTOR_AGREEMENT">Contractor Agreement & Safety Contract</option>
+                            <option value="MINE_SOP">Mine Standard Operating Procedure (SOP)</option>
+                            <option value="SAFETY_RULES">Mine Safety Rules & Emergency Protocols</option>
+                            <option value="DGMS_CLEARANCE">DGMS Statutory Clearance</option>
+                            <option value="SPCB_CONSENT">Pollution Control Board NOC (Air/Water)</option>
+                            <option value="EXPLOSIVE_MAGAZINE">PESO Explosive Magazine License</option>
+                            <option value="HEMM_FITNESS">Machinery Safety Fitness Certificate</option>
+                            <option value="CONTRACTOR_PERMIT">Contractor Labor Safety Permit</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Select File (PDF, PNG, JPG, TXT)</label>
+                        <input type="file" id="docFile" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.txt,.md" required>
+                        <small class="text-muted">OCR will automatically parse certificate/contract terms, safety rules, authority & validity dates.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="docUploadBtn" class="btn btn-dark">Upload & Run OCR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: View Extracted OCR Text -->
+<div class="modal fade" id="ocrViewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Extracted OCR Text</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="ocrTextContent" class="bg-light p-3 rounded small" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto;"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    async function loadDocuments() {
+        const res = await API.get("/api/documents");
+        const tbody = document.getElementById("docsTableBody");
+        if (!res || !res.success || !res.data || res.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No documents uploaded yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = res.data.map(d => {
+            let statusBadge = "bg-success";
+            if (d.status === "EXPIRED") statusBadge = "bg-danger";
+            else if (d.status === "EXPIRING_SOON") statusBadge = "bg-warning text-dark";
+
+            const chatQuery = encodeURIComponent(
+                d.document_type === "CONTRACTOR_AGREEMENT"
+                    ? `Check contract details for ${d.original_filename}`
+                    : `What does ${d.original_filename} say about safety rules?`
+            );
+
+            return `
+                <tr>
+                    <td>
+                        <div class="fw-bold">${d.original_filename}</div>
+                        <small class="text-muted"><code>${d.document_number || 'N/A'}</code></small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">${d.document_type}</span></td>
+                    <td><span class="text-truncate d-inline-block text-muted" style="max-width: 180px;">${d.authority || 'DGMS'}</span></td>
+                    <td>${d.expiry_date ? d.expiry_date.substring(0, 10) : 'Not Specified'}</td>
+                    <td><span class="badge ${statusBadge}">${d.status}</span></td>
+                    <td>
+                        <span class="badge bg-secondary">${d.ocr_mode || 'OCR'}</span>
+                        <span class="badge bg-info text-dark ms-1"><i class="bi bi-cpu"></i> RAG Ready</span>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-xs btn-outline-dark" onclick="viewOCR('${d._id}')">View OCR</button>
+                            <a href="/regulatory-assistant?query=${chatQuery}" class="btn btn-xs btn-warning text-dark" title="Ask RAG Chatbot"><i class="bi bi-robot"></i> Ask</a>
+                            <a href="${d.file_url}" target="_blank" class="btn btn-xs btn-light border"><i class="bi bi-download"></i></a>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    async function viewOCR(id) {
+        const res = await API.get(`/api/documents/${id}`);
+        if (!res || !res.success) return;
+        document.getElementById("ocrTextContent").textContent = res.data.extracted_text || "No text extracted.";
+        new bootstrap.Modal(document.getElementById("ocrViewModal")).show();
+    }
+
+    async function scanExpiries() {
+        const res = await API.post("/api/documents/scan-expiries");
+        if (res && res.success) {
+            API.showToast(`Scan complete: ${res.data.expired} expired, ${res.data.expiring_soon} expiring soon.`, "warning");
+            loadDocuments();
+        }
+    }
+
+    async function handleUploadDoc(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById("docFile");
+        if (!fileInput.files.length) return;
+
+        const btn = document.getElementById("docUploadBtn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing OCR...';
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("mine_id", document.getElementById("docMine").value);
+        formData.append("document_type", document.getElementById("docType").value);
+
+        const res = await API.post("/api/documents/upload", formData);
+        btn.disabled = false;
+        btn.innerHTML = 'Upload & Run OCR';
+
+        if (res && res.success) {
+            bootstrap.Modal.getInstance(document.getElementById("uploadDocModal")).hide();
+            API.showToast("Document uploaded and OCR extracted!", "success");
+            loadDocuments();
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("docMine");
+            sel.innerHTML = mRes.data.map(m => `<option value="${m._id}">${m.mine_name}</option>`).join("");
+        }
+        loadDocuments();
+    });
+</script>
+{% endblock %}

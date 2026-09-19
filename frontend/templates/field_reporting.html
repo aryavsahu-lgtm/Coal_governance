@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Mobile Field Reporting | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1"><i class="bi bi-phone text-warning me-2"></i>Mobile Field Observation Intake</h4>
+                    <p class="text-muted small mb-0">Record on-ground mine safety, equipment condition & environmental hazards</p>
+                </div>
+                <span id="connStatusBadge" class="badge bg-success"><i class="bi bi-wifi"></i> Online</span>
+            </div>
+
+            <form id="fieldReportForm" onsubmit="handleFieldReportSubmit(event)">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Select Mine</label>
+                        <select id="fieldMine" class="form-select" onchange="loadMineZones(this.value)" required>
+                            <option value="">-- Choose Mine --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Select Zone / Pit Perimeter</label>
+                        <select id="fieldZone" class="form-select">
+                            <option value="">General Mine Perimeter</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Observation Category</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <input type="radio" class="btn-check" name="fieldCat" id="catSafety" value="Safety" checked>
+                        <label class="btn btn-sm btn-outline-secondary" for="catSafety"><i class="bi bi-shield-exclamation"></i> Safety / PPE</label>
+
+                        <input type="radio" class="btn-check" name="fieldCat" id="catEnv" value="Environment">
+                        <label class="btn btn-sm btn-outline-secondary" for="catEnv"><i class="bi bi-tree"></i> Environment</label>
+
+                        <input type="radio" class="btn-check" name="fieldCat" id="catMachine" value="Machinery">
+                        <label class="btn btn-sm btn-outline-secondary" for="catMachine"><i class="bi bi-truck"></i> Machinery & Berms</label>
+
+                        <input type="radio" class="btn-check" name="fieldCat" id="catRestricted" value="Restricted Area">
+                        <label class="btn btn-sm btn-outline-secondary" for="catRestricted"><i class="bi bi-slash-circle"></i> Restricted Area</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">On-Ground Observation Notes</label>
+                    <textarea id="fieldObs" class="form-control" rows="3" required placeholder="Describe what you observed (e.g. absent audio-visual alarm on dumper, worker without safety helmet near bench toe, excessive dust plume)..."></textarea>
+                </div>
+
+                <!-- GPS Capture Button -->
+                <div class="card bg-light p-3 border-0 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold small"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Geo-Location Coordinates</div>
+                            <small class="text-muted" id="gpsDisplay">Lat: 25.0485, Lng: 87.3785 (Default Mine Centre)</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-dark" onclick="captureGPS()">
+                            <i class="bi bi-crosshair"></i> Auto-Detect GPS
+                        </button>
+                    </div>
+                    <input type="hidden" id="fieldLat" value="25.0485">
+                    <input type="hidden" id="fieldLng" value="87.3785">
+                </div>
+
+                <!-- Evidence Intake: Live Camera or File Selection -->
+                <div class="card p-3 border mb-4 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label small fw-bold mb-0">Violation Evidence (Photo / Video)</label>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-warning active fw-semibold" id="tabCamera" onclick="switchEvidenceTab('camera')">
+                                <i class="bi bi-camera-fill me-1"></i> Live Camera
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="tabFile" onclick="switchEvidenceTab('file')">
+                                <i class="bi bi-folder2-open me-1"></i> Browse Files
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mode A: Live Camera Viewfinder -->
+                    <div id="cameraModeContainer">
+                        <div id="cameraViewfinder" class="position-relative bg-dark rounded overflow-hidden text-center mb-2" style="min-height: 220px; display: flex; align-items: center; justify-content: center;">
+                            <video id="cameraVideo" autoplay playsinline class="w-100" style="max-height: 280px; object-fit: cover; display: none;"></video>
+                            
+                            <!-- Initial Camera Prompt -->
+                            <div id="cameraPrompt" class="p-4 text-white">
+                                <i class="bi bi-camera-video text-warning fs-1 d-block mb-2"></i>
+                                <div class="fw-bold">Camera Viewfinder Ready</div>
+                                <small class="text-white-50 d-block mb-3">Snap live photo of unsafe condition, missing PPE, or machinery hazard</small>
+                                <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="startCamera()">
+                                    <i class="bi bi-play-circle-fill me-1"></i> Open Device Camera
+                                </button>
+                            </div>
+
+                            <!-- Live Active Overlay -->
+                            <div id="cameraActiveControls" class="position-absolute bottom-0 start-0 end-0 p-2 bg-dark bg-opacity-75 d-none d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-warning fw-bold btn-sm" onclick="takeSnapshot()">
+                                    <i class="bi bi-camera-fill me-1"></i> Capture Photo
+                                </button>
+                                <button type="button" class="btn btn-outline-light btn-sm" onclick="stopCamera()">
+                                    <i class="bi bi-x-circle me-1"></i> Close Camera
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Captured Snapshot Preview -->
+                        <div id="snapshotPreviewCard" class="card border-success p-2 d-none">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <img id="snapshotThumb" src="" alt="Captured Evidence" class="rounded border" style="width: 80px; height: 60px; object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold text-success small"><i class="bi bi-check-circle-fill me-1"></i>Live Snapshot Attached</div>
+                                        <small class="text-muted" id="snapshotDetails">Timestamped statutory evidence</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-dark me-1" onclick="startCamera()">
+                                        <i class="bi bi-arrow-repeat"></i> Retake
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearSnapshot()">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mode B: File Browse Input -->
+                    <div id="fileModeContainer" class="d-none">
+                        <input type="file" id="fieldMedia" class="form-control" accept="image/*,video/*" capture="environment">
+                        <small class="text-muted">Select image or video from device storage.</small>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" id="submitReportBtn" class="btn btn-dark py-2 fw-bold">
+                        <i class="bi bi-send me-1"></i> Submit Field Observation Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function updateConnBadge() {
+        const badge = document.getElementById("connStatusBadge");
+        if (navigator.onLine) {
+            badge.className = "badge bg-success";
+            badge.innerHTML = '<i class="bi bi-wifi"></i> Online';
+        } else {
+            badge.className = "badge bg-danger";
+            badge.innerHTML = '<i class="bi bi-wifi-off"></i> Offline Mode';
+        }
+    }
+    window.addEventListener("online", updateConnBadge);
+    window.addEventListener("offline", updateConnBadge);
+
+    async function loadMineZones(mineId) {
+        const zSel = document.getElementById("fieldZone");
+        zSel.innerHTML = '<option value="">General Mine Perimeter</option>';
+        if (!mineId) return;
+
+        const res = await API.get(`/api/mines/${mineId}/zones`);
+        if (res && res.success && res.data) {
+            res.data.forEach(z => {
+                const opt = document.createElement("option");
+                opt.value = z._id;
+                opt.textContent = `${z.zone_name} (${z.zone_type})`;
+                zSel.appendChild(opt);
+            });
+        }
+    }
+
+    let activeEvidenceMode = "camera";
+    let capturedPhotoFile = null;
+
+    function switchEvidenceTab(mode) {
+        activeEvidenceMode = mode;
+        const tabCam = document.getElementById("tabCamera");
+        const tabFile = document.getElementById("tabFile");
+        const camCont = document.getElementById("cameraModeContainer");
+        const fileCont = document.getElementById("fileModeContainer");
+
+        if (mode === "camera") {
+            tabCam.className = "btn btn-warning active fw-semibold";
+            tabFile.className = "btn btn-outline-secondary";
+            camCont.classList.remove("d-none");
+            fileCont.classList.add("d-none");
+        } else {
+            tabFile.className = "btn btn-secondary active fw-semibold";
+            tabCam.className = "btn btn-outline-secondary";
+            fileCont.classList.remove("d-none");
+            camCont.classList.add("d-none");
+            stopCamera();
+        }
+    }
+
+    async function startCamera() {
+        try {
+            const videoEl = document.getElementById("cameraVideo");
+            document.getElementById("cameraPrompt").classList.add("d-none");
+            document.getElementById("snapshotPreviewCard").classList.add("d-none");
+            videoEl.style.display = "block";
+            await CameraHelper.startStream(videoEl);
+            document.getElementById("cameraActiveControls").classList.remove("d-none");
+        } catch (err) {
+            API.showToast(err.message, "danger");
+            stopCamera();
+        }
+    }
+
+    function stopCamera() {
+        const videoEl = document.getElementById("cameraVideo");
+        CameraHelper.stopStream(videoEl);
+        videoEl.style.display = "none";
+        document.getElementById("cameraActiveControls").classList.add("d-none");
+        if (!capturedPhotoFile) {
+            document.getElementById("cameraPrompt").classList.remove("d-none");
+        }
+    }
+
+    async function takeSnapshot() {
+        try {
+            const videoEl = document.getElementById("cameraVideo");
+            const { file, dataUrl } = await CameraHelper.captureSnapshot(videoEl, "field_violation");
+            capturedPhotoFile = file;
+
+            // Stop video stream and display preview card
+            stopCamera();
+            document.getElementById("cameraPrompt").classList.add("d-none");
+            document.getElementById("snapshotThumb").src = dataUrl;
+            document.getElementById("snapshotDetails").textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+            document.getElementById("snapshotPreviewCard").classList.remove("d-none");
+
+            API.showToast("Violation snapshot captured successfully!", "success");
+        } catch (err) {
+            API.showToast(err.message, "danger");
+        }
+    }
+
+    function clearSnapshot() {
+        capturedPhotoFile = null;
+        document.getElementById("snapshotPreviewCard").classList.add("d-none");
+        document.getElementById("cameraPrompt").classList.remove("d-none");
+    }
+
+    function captureGPS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const lat = pos.coords.latitude.toFixed(5);
+                    const lng = pos.coords.longitude.toFixed(5);
+                    document.getElementById("fieldLat").value = lat;
+                    document.getElementById("fieldLng").value = lng;
+                    document.getElementById("gpsDisplay").textContent = `Lat: ${lat}, Lng: ${lng} (Precision: ${pos.coords.accuracy}m)`;
+                    API.showToast("GPS coordinates locked successfully", "success");
+                },
+                err => {
+                    API.showToast("Could not retrieve live GPS. Using mine center.", "warning");
+                }
+            );
+        } else {
+            API.showToast("Geolocation not supported by device.", "warning");
+        }
+    }
+
+    async function handleFieldReportSubmit(e) {
+        e.preventDefault();
+        const mineId = document.getElementById("fieldMine").value;
+        const zoneId = document.getElementById("fieldZone").value;
+        const category = document.querySelector('input[name="fieldCat"]:checked').value;
+        const observation = document.getElementById("fieldObs").value;
+        const lat = parseFloat(document.getElementById("fieldLat").value);
+        const lng = parseFloat(document.getElementById("fieldLng").value);
+        const fileInput = document.getElementById("fieldMedia");
+
+        // Determine evidence file from camera or file browse
+        const evidenceFile = (activeEvidenceMode === "camera" && capturedPhotoFile) 
+            ? capturedPhotoFile 
+            : (fileInput.files.length > 0 ? fileInput.files[0] : null);
+
+        const payload = {
+            mine_id: mineId,
+            zone_id: zoneId,
+            category: category,
+            observation: observation,
+            latitude: lat,
+            longitude: lng,
+            photos: []
+        };
+
+        const submitBtn = document.getElementById("submitReportBtn");
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing & Analyzing...';
+
+        try {
+            // If offline, enqueue locally
+            if (!navigator.onLine) {
+                OfflineSync.enqueueReport(payload);
+                document.getElementById("fieldReportForm").reset();
+                clearSnapshot();
+                return;
+            }
+
+            // Upload media if present
+            if (evidenceFile) {
+                const formData = new FormData();
+                formData.append("file", evidenceFile);
+                formData.append("mine_id", mineId);
+                formData.append("document_type", "FIELD_EVIDENCE");
+
+                const uploadRes = await API.post("/api/documents/upload", formData);
+                if (uploadRes && uploadRes.success && uploadRes.data) {
+                    payload.photos.push(uploadRes.data.file_url);
+                }
+            }
+
+            const res = await API.post("/api/field-reports", payload);
+            if (res && res.success) {
+                API.showToast("Field observation submitted and assigned to safety officer!", "success");
+                document.getElementById("fieldReportForm").reset();
+                clearSnapshot();
+                stopCamera();
+            }
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-send me-1"></i> Submit Field Observation Report';
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        updateConnBadge();
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("fieldMine");
+            mRes.data.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m._id;
+                opt.textContent = m.mine_name;
+                sel.appendChild(opt);
+            });
+        }
+    });
+</script>
+{% endblock %}

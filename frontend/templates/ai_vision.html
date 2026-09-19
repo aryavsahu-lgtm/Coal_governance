@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}AI Visual Violation Studio | CoalGov-AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-camera-video text-warning me-2"></i>AI Visual Violation Studio</h4>
+        <p class="text-muted small mb-0">YOLOv8 + OpenCV automated detection for PPE (Hardhat, Vest) and Restricted Zone breaches</p>
+    </div>
+    <div>
+        <span class="badge bg-dark border" id="detectorStatusBadge">Checking Model...</span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Upload & Config Controls -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <h6 class="fw-bold mb-3">Inference Configuration & Input</h6>
+
+            <form onsubmit="handleInferenceSubmit(event)">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Target Mine</label>
+                    <select id="aiMine" class="form-select" required></select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Media Type</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="mediaType" id="typeImage" value="image" checked onchange="toggleMediaInput()">
+                        <label class="btn btn-outline-dark" for="typeImage"><i class="bi bi-image"></i> Image</label>
+
+                        <input type="radio" class="btn-check" name="mediaType" id="typeCamera" value="camera" onchange="toggleMediaInput()">
+                        <label class="btn btn-outline-dark" for="typeCamera"><i class="bi bi-camera-fill text-warning"></i> Live Camera</label>
+
+                        <input type="radio" class="btn-check" name="mediaType" id="typeVideo" value="video" onchange="toggleMediaInput()">
+                        <label class="btn btn-outline-dark" for="typeVideo"><i class="bi bi-film"></i> Video</label>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="imageInputGroup">
+                    <label class="form-label small fw-semibold">Upload Image File</label>
+                    <input type="file" id="imageFile" class="form-control" accept="image/*">
+                </div>
+
+                <div class="mb-3 d-none" id="cameraInputGroup">
+                    <label class="form-label small fw-semibold">Live Camera Feed</label>
+                    <div class="card bg-dark text-center p-2 mb-2 rounded overflow-hidden position-relative" style="min-height: 200px;">
+                        <video id="aiVideo" autoplay playsinline class="w-100 rounded" style="max-height: 240px; object-fit: cover; display: none;"></video>
+                        <div id="aiCamPrompt" class="p-3 text-white">
+                            <i class="bi bi-webcam text-warning fs-2 d-block mb-1"></i>
+                            <span class="small d-block text-white-50 mb-2">Inspect real-time PPE compliance via device camera</span>
+                            <button type="button" class="btn btn-warning btn-sm fw-bold" onclick="startAiCamera()">
+                                <i class="bi bi-play-circle-fill me-1"></i> Start Camera
+                            </button>
+                        </div>
+                        <div id="aiCamActiveControls" class="position-absolute bottom-0 start-0 end-0 p-2 bg-dark bg-opacity-75 d-none">
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="stopAiCamera()">
+                                <i class="bi bi-x-circle me-1"></i> Stop Camera
+                            </button>
+                        </div>
+                    </div>
+                    <small class="text-muted">Clicking "Run AI Vision Inference" will snap the current live frame and perform real-time YOLOv8 PPE analysis.</small>
+                </div>
+
+                <div class="mb-3 d-none" id="videoInputGroup">
+                    <label class="form-label small fw-semibold">Upload Video File</label>
+                    <input type="file" id="videoFile" class="form-control" accept="video/*">
+                </div>
+
+                <div class="form-check form-switch mb-4 p-3 bg-light rounded">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" id="autoCreateViolation" checked>
+                    <label class="form-check-label fw-bold small text-danger" for="autoCreateViolation">
+                        Automate Governance Dispatch:
+                    </label>
+                    <div class="text-muted small">
+                        Automatically trigger Rule Engine, create violation record & assign Corrective Action (CAPA).
+                    </div>
+                </div>
+
+                <button type="submit" id="runInferenceBtn" class="btn btn-dark w-100 py-2 fw-bold">
+                    <i class="bi bi-play-circle me-1"></i> Run AI Vision Inference
+                </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="small fw-bold text-uppercase text-secondary mb-2">Configured Detection Classes:</h6>
+                <div class="d-flex flex-wrap gap-1">
+                    <span class="badge bg-secondary">Person / Worker</span>
+                    <span class="badge bg-secondary">Safety Helmet</span>
+                    <span class="badge bg-secondary">Hi-Vis Vest</span>
+                    <span class="badge bg-secondary">Restricted Area Polygon</span>
+                    <span class="badge bg-secondary">Heavy Earthmovers (HEMM)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Visual Output & Detections List -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <h6 class="fw-bold mb-3">AI Detection & Violation Analysis Results</h6>
+
+            <!-- Media Preview Window -->
+            <div class="ai-preview-container mb-3" id="previewContainer">
+                <div class="text-secondary text-center p-4">
+                    <i class="bi bi-camera-video fs-1 d-block mb-2 text-muted"></i>
+                    Upload an image or video to visualize YOLO bounding boxes & rule evaluations.
+                </div>
+            </div>
+
+            <!-- Detected Violations Summary Banner -->
+            <div id="violationsAlertContainer" style="display: none;"></div>
+
+            <!-- Detections Table -->
+            <h6 class="small fw-bold text-uppercase text-secondary mb-2">Object Detections & Confidence:</h6>
+            <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                <table class="table table-sm table-hover align-middle small mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Class</th>
+                            <th>Confidence</th>
+                            <th>Bounding Box (x1, y1, x2, y2)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detectionsListBody">
+                        <tr><td colspan="4" class="text-center py-2 text-muted">No inference run yet.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleMediaInput() {
+        const isVideo = document.getElementById("typeVideo").checked;
+        const isCamera = document.getElementById("typeCamera").checked;
+        const isImage = document.getElementById("typeImage").checked;
+
+        document.getElementById("imageInputGroup").classList.toggle("d-none", !isImage);
+        document.getElementById("cameraInputGroup").classList.toggle("d-none", !isCamera);
+        document.getElementById("videoInputGroup").classList.toggle("d-none", !isVideo);
+
+        if (!isCamera) {
+            stopAiCamera();
+        }
+    }
+
+    async function startAiCamera() {
+        try {
+            const videoEl = document.getElementById("aiVideo");
+            document.getElementById("aiCamPrompt").classList.add("d-none");
+            videoEl.style.display = "block";
+            await CameraHelper.startStream(videoEl);
+            document.getElementById("aiCamActiveControls").classList.remove("d-none");
+        } catch (err) {
+            API.showToast(err.message, "danger");
+            stopAiCamera();
+        }
+    }
+
+    function stopAiCamera() {
+        const videoEl = document.getElementById("aiVideo");
+        CameraHelper.stopStream(videoEl);
+        videoEl.style.display = "none";
+        document.getElementById("aiCamActiveControls").classList.add("d-none");
+        document.getElementById("aiCamPrompt").classList.remove("d-none");
+    }
+
+    async function checkModelStatus() {
+        const res = await API.get("/api/ai/model-status");
+        if (res && res.success && res.data) {
+            const badge = document.getElementById("detectorStatusBadge");
+            badge.textContent = `${res.data.model_name} ${res.data.is_mock ? '(Mock Fallback)' : '(Active)'}`;
+            badge.className = `badge ${res.data.is_mock ? 'bg-warning text-dark' : 'bg-success'}`;
+        }
+    }
+
+    async function handleInferenceSubmit(e) {
+        e.preventDefault();
+        const isVideo = document.getElementById("typeVideo").checked;
+        const isCamera = document.getElementById("typeCamera").checked;
+        const mineId = document.getElementById("aiMine").value;
+        const autoCreate = document.getElementById("autoCreateViolation").checked;
+        const btn = document.getElementById("runInferenceBtn");
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Running Computer Vision Inference...';
+
+        const previewContainer = document.getElementById("previewContainer");
+        const alertContainer = document.getElementById("violationsAlertContainer");
+        const tbody = document.getElementById("detectionsListBody");
+
+        try {
+            if (isCamera) {
+                // Live Camera Snapshot Inference
+                const videoEl = document.getElementById("aiVideo");
+                let snapFile;
+                try {
+                    const snap = await CameraHelper.captureSnapshot(videoEl, "camera_ppe_scan");
+                    snapFile = snap.file;
+                } catch (snapErr) {
+                    API.showToast("Camera feed is not active. Please click 'Start Camera' first.", "warning");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run AI Vision Inference';
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("image", snapFile);
+                formData.append("mine_id", mineId);
+                formData.append("auto_create_violation", autoCreate);
+
+                const res = await API.post("/api/ai/image-detect", formData);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run AI Vision Inference';
+
+                if (res && res.success && res.data) {
+                    const d = res.data;
+                    previewContainer.innerHTML = `<img src="${d.annotated_image_url}" alt="Annotated Detection Frame" class="img-fluid rounded">`;
+
+                    if (d.violations_detected > 0) {
+                        alertContainer.style.display = "block";
+                        alertContainer.innerHTML = `
+                            <div class="alert alert-danger d-flex align-items-center mb-3">
+                                <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+                                <div>
+                                    <strong class="d-block">${d.violations_detected} Safety Violation(s) Detected by Rule Engine!</strong>
+                                    ${autoCreate ? 'Violations automatically logged in database & CAPA assigned to Safety Officer.' : 'Automatic dispatch disabled.'}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        alertContainer.style.display = "none";
+                    }
+
+                    if (d.detections && d.detections.length > 0) {
+                        tbody.innerHTML = d.detections.map(det => `
+                            <tr>
+                                <td><span class="badge ${det.is_violation ? 'bg-danger' : 'bg-success'}">${det.class}</span></td>
+                                <td>${(det.confidence * 100).toFixed(1)}%</td>
+                                <td><small class="text-muted">[${det.bbox.join(', ')}]</small></td>
+                                <td>${det.is_violation ? '<span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i>VIOLATION</span>' : '<span class="text-success"><i class="bi bi-check-circle me-1"></i>COMPLIANT</span>'}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">No objects identified in this frame.</td></tr>';
+                    }
+                }
+            } else if (!isVideo) {
+                // Image File Inference
+                const imgInput = document.getElementById("imageFile");
+                if (!imgInput.files.length) {
+                    API.showToast("Please select an image file.", "warning");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run AI Vision Inference';
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("image", imgInput.files[0]);
+                formData.append("mine_id", mineId);
+                formData.append("auto_create_violation", autoCreate);
+
+                const res = await API.post("/api/ai/image-detect", formData);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run AI Vision Inference';
+
+                if (res && res.success && res.data) {
+                    const d = res.data;
+                    previewContainer.innerHTML = `<img src="${d.annotated_image_url}" alt="Annotated Detection Frame" class="img-fluid rounded">`;
+
+                    if (d.violations_detected > 0) {
+                        alertContainer.style.display = "block";
+                        alertContainer.innerHTML = `
+                            <div class="alert alert-danger d-flex align-items-center mb-3">
+                                <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+                                <div>
+                                    <strong class="d-block">${d.violations_detected} Safety Violation(s) Detected by Rule Engine!</strong>
+                                    ${autoCreate ? 'Violations automatically logged in database & CAPA assigned to Safety Officer.' : 'Automatic dispatch disabled.'}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        alertContainer.style.display = "block";
+                        alertContainer.innerHTML = `
+                            <div class="alert alert-success d-flex align-items-center mb-3">
+                                <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+                                <div><strong>Compliant:</strong> All personnel wearing mandatory PPE. No perimeter breaches detected.</div>
+                            </div>
+                        `;
+                    }
+
+                    tbody.innerHTML = d.detections.map(det => `
+                        <tr>
+                            <td><strong>${det.class}</strong></td>
+                            <td>${(det.confidence * 100).toFixed(1)}%</td>
+                            <td><code>[${det.bbox.join(', ')}]</code></td>
+                            <td><span class="badge ${det.class === 'person' && d.violations_detected > 0 ? 'bg-danger' : 'bg-success'}">${det.class === 'person' && d.violations_detected > 0 ? 'Violation Flagged' : 'Pass'}</span></td>
+                        </tr>
+                    `).join("");
+                }
+            } else {
+                // Video Inference
+                const vidInput = document.getElementById("videoFile");
+                if (!vidInput.files.length) {
+                    API.showToast("Please select a video file.", "warning");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run AI Vision Inference';
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("video", vidInput.files[0]);
+
+                const res = await API.post("/api/ai/video-detect", formData);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run AI Vision Inference';
+
+                if (res && res.success && res.data) {
+                    const d = res.data;
+                    const firstKeyframe = (d.keyframes && d.keyframes.length > 0) ? d.keyframes[0].annotated_frame_url : "";
+                    previewContainer.innerHTML = firstKeyframe ? `<img src="${firstKeyframe}" class="img-fluid rounded" alt="Keyframe Evidence">` : `<div class="text-white p-4">Processed ${d.frames_analyzed} frames across ${d.duration_seconds}s video.</div>`;
+
+                    alertContainer.style.display = "block";
+                    alertContainer.innerHTML = `
+                        <div class="alert ${d.total_violations > 0 ? 'alert-danger' : 'alert-success'} mb-3">
+                            <strong>Video Analysis Complete:</strong> Analyzed ${d.frames_analyzed} sampled frames. ${d.total_violations} violation events logged.
+                        </div>
+                    `;
+
+                    tbody.innerHTML = (d.violations || []).map(v => `
+                        <tr>
+                            <td><strong>${v.violation_type}</strong></td>
+                            <td>${(v.confidence * 100).toFixed(1)}%</td>
+                            <td><code>At ${v.timestamp_sec}s</code></td>
+                            <td><span class="badge bg-danger">Keyframe Flagged</span></td>
+                        </tr>
+                    `).join("");
+                }
+            }
+        } catch (err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-play-circle me-1"></i> Run AI Vision Inference';
+            API.showToast("Inference error: " + err.message, "danger");
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        checkModelStatus();
+        const mRes = await API.get("/api/mines");
+        if (mRes && mRes.success) {
+            const sel = document.getElementById("aiMine");
+            sel.innerHTML = mRes.data.map(m => `<option value="${m._id}">${m.mine_name}</option>`).join("");
+        }
+    });
+</script>
+{% endblock %}
